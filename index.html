@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PCB Reverser</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="src/styles.css">
+    <style>
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 48px 24px;
+        text-align: center;
+      }
+      .hero-title {
+        font-size: clamp(2rem, 6vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.1;
+        margin: 0;
+        color: var(--ink);
+      }
+      .hero-description {
+        font-size: 1.1rem;
+        color: var(--muted-ink);
+        max-width: 520px;
+        margin: 0;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.15s;
+      }
+      .btn:hover { opacity: 0.8; }
+      .btn-primary {
+        background: var(--green);
+        color: #fff;
+      }
+      .btn-secondary {
+        background: var(--panel);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .hero-meta {
+        font-size: 0.8rem;
+        color: var(--muted-ink);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="hero">
+      <h1 class="hero-title" id="hero-title">PCB Reverser</h1>
+      <p class="hero-description" id="hero-description">Herramienta de ingeniería inversa de placas PCB.</p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="viewer.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Abrir Viewer
+        </a>
+        <a class="btn btn-secondary" href="bom.html">BOM</a>
+        <a class="btn btn-secondary" href="trace_editor.html">Editor de pistas</a>
+      </div>
+
+      <p class="hero-meta" id="hero-meta"></p>
+    </main>
+
+    <script>
+      fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(project => {
+        const name = project?.name || 'PCB Reverser';
+        const desc = project?.description || '';
+        document.title = name;
+        document.getElementById('hero-title').textContent = name;
+        if (desc) document.getElementById('hero-description').textContent = desc;
+        const meta = [];
+        if (project?.scan?.dpi) meta.push(`${project.scan.dpi} DPI`);
+        if (project?.scan?.layers?.length) meta.push(`${project.scan.layers.length} capas`);
+        const metaEl = document.getElementById('hero-meta');
+        if (meta.length) metaEl.textContent = meta.join(' · ');
+      });
+    </script>
+  </body>
+</html>

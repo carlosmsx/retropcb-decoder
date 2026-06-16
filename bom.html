@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Bill of Materials — lista completa de componentes con valores, tipos y notas.">
+    <title>BOM — PCB Reverser</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+    <link rel="stylesheet" href="src/styles.css?v=20260607">
+    <script src="src/i18n.js"></script>
+    <style>
+      /* ── BOM page layout ── */
+      .bom-page {
+        padding: clamp(32px, 5vw, 64px) clamp(18px, 5vw, 72px) 80px;
+      }
+      .brand-dpc {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: .01em;
+      }
+      .sticky-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        background: var(--paper);
+      }
+
+      .bom-head {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .bom-head h1 {
+        margin: 0;
+        font-size: clamp(36px, 6vw, 64px);
+      }
+
+      .bom-count {
+        color: var(--muted-ink);
+        font-size: 15px;
+      }
+
+      /* ── Controls ── */
+      .bom-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .bom-search {
+        width: 240px;
+        min-height: 38px;
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--ink);
+        font: inherit;
+        font-size: 14px;
+      }
+
+      .bom-search:focus {
+        outline: 2px solid var(--green);
+        outline-offset: 1px;
+        border-color: var(--green);
+      }
+
+      .type-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .type-btn {
+        min-height: 32px;
+        padding: 4px 13px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--panel);
+        color: var(--muted-ink);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background .1s, color .1s, border-color .1s;
+      }
+
+      .type-btn:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+
+      .type-btn.is-active {
+        background: var(--ink);
+        color: var(--paper);
+        border-color: var(--ink);
+      }
+
+      /* ── Table wrapper ── */
+      .bom-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      thead {
+        background: var(--paper);
+      }
+
+      th {
+        padding: 10px 14px;
+        border-bottom: 2px solid var(--line);
+        text-align: left;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted-ink);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      th:hover { color: var(--ink); }
+      th.sort-asc::after  { content: ' ↑'; color: var(--green); }
+      th.sort-desc::after { content: ' ↓'; color: var(--green); }
+
+      td {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr:hover td { background: #f0f4f0; }
+
+      .ref-cell {
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* ── Type badges ── */
+      .badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        white-space: nowrap;
+      }
+
+      .badge-IC    { background: #d8ede7; color: #0e4f43; }
+      .badge-CAP   { background: #d6e6f4; color: #1a4a72; }
+      .badge-RES   { background: #fde9c7; color: #7a4f10; }
+      .badge-CON   { background: #e4e8e4; color: #3a4a3a; }
+      .badge-CON50 { background: #e4e8e4; color: #3a4a3a; }
+      .badge-DIO   { background: #fad9d6; color: #6e1c18; }
+      .badge-IND   { background: #ead8f5; color: #52207a; }
+      .badge-RNET  { background: #e4e8e4; color: #3a4a3a; }
+      .badge-XTAL  { background: #d4f0ec; color: #0d4a42; }
+      .badge-JP    { background: #fde8d0; color: #7a3d0a; }
+      .badge-RELAY { background: #fad9d6; color: #6e1c18; }
+
+      /* ── Cells ── */
+      .value-cell {
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+      }
+
+      .note-cell {
+        color: var(--muted-ink);
+        font-size: 13px;
+        max-width: 340px;
+      }
+
+      .missing {
+        color: #bbb;
+      }
+
+      .ref-link {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px dotted var(--muted-ink);
+        transition: color .1s, border-color .1s;
+      }
+
+      .ref-link:hover {
+        color: var(--green);
+        border-bottom-color: var(--green);
+      }
+
+      /* ── Empty state ── */
+      .bom-empty {
+        padding: 48px;
+        text-align: center;
+        color: var(--muted-ink);
+        font-size: 15px;
+      }
+
+      @media (max-width: 720px) {
+        .bom-search { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Ir al inicio" id="nav-brand">
+        <span id="nav-project-name">PCB Reverser</span>
+      </a>
+      <nav>
+        <a href="viewer.html">Viewer</a>
+      </nav>
+    </header>
+
+    <main class="bom-page">
+      <div class="bom-head">
+        <h1>Bill of Materials</h1>
+        <span class="bom-count" id="bom-count"></span>
+      </div>
+
+      <div class="bom-controls">
+        <input
+          type="search"
+          class="bom-search"
+          id="bom-search"
+          placeholder="Buscar ref, part, valor…"
+          aria-label="Buscar componente"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="type-filters" id="type-filters"></div>
+      </div>
+
+      <div class="bom-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="ref">Ref</th>
+              <th data-col="comp_type">Tipo</th>
+              <th data-col="value">Valor / Part</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody id="bom-body"></tbody>
+        </table>
+        <div class="bom-empty" id="bom-empty" hidden>Sin resultados.</div>
+      </div>
+    </main>
+
+    <div class="page-footer sticky-footer">
+      <div class="hero-stripes" aria-hidden="true"></div>
+      <div class="hero-model">
+        <span id="footer-project-name">PCB Reverser</span>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        'use strict';
+
+        const EXCLUDE = new Set(['VIA']);
+
+        const TYPE_LABEL = {
+          IC: 'IC', CAP: 'Cap', RES: 'Res', CON: 'CON', CON50: 'CON50',
+          DIO: 'Diodo', IND: 'Ind', RNET: 'RNet', XTAL: 'Xtal',
+          JP: 'JP', RELAY: 'Relay',
+        };
+
+        let allRows  = [];
+        let sortCol  = 'ref';
+        let sortDir  = 1;        // 1 = asc, −1 = desc
+        let activeType = null;
+        let searchQ  = '';
+
+        /* ── Field helpers ── */
+
+        function getValue(c) {
+          if (c.comp_type === 'IC')    return c.part || '';
+          if (c.comp_type === 'CON')   return c.part || '';
+          if (c.comp_type === 'CON50') return c.part || '';
+          if (c.comp_type === 'RNET')  return c.part || '';
+          return c.value || '';
+        }
+
+        function getDesc(c) {
+          const t = c.comp_type;
+          if (t === 'CAP') return [c.type, c.note].filter(Boolean).join(' · ');
+          return c.note || '';
+        }
+
+        /* ── Natural sort for refs ── */
+
+        function refKey(ref) {
+          const m = String(ref).match(/^([A-Za-z]+)(\d+)?(.*)$/);
+          if (!m) return [ref, 0, ''];
+          return [m[1].toUpperCase(), parseInt(m[2] || '0', 10), m[3] || ''];
+        }
+
+        function cmpRef(a, b) {
+          const [al, an, ax] = refKey(a);
+          const [bl, bn, bx] = refKey(b);
+          if (al !== bl) return al < bl ? -1 : 1;
+          if (an !== bn) return an - bn;
+          return ax < bx ? -1 : ax > bx ? 1 : 0;
+        }
+
+        /* ── Render ── */
+
+        function esc(s) {
+          return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        }
+
+        function render() {
+          const q = searchQ.toLowerCase();
+
+          let rows = allRows.filter(c => {
+            if (activeType && c.comp_type !== activeType) return false;
+            if (!q) return true;
+            const hay = [c.ref, getValue(c), getDesc(c), TYPE_LABEL[c.comp_type] || c.comp_type]
+              .join(' ').toLowerCase();
+            return hay.includes(q);
+          });
+
+          rows.sort((a, b) => {
+            if (sortCol === 'ref')       return sortDir * cmpRef(a.ref, b.ref);
+            if (sortCol === 'comp_type') return sortDir * a.comp_type.localeCompare(b.comp_type);
+            if (sortCol === 'value') {
+              return sortDir * getValue(a).localeCompare(getValue(b));
+            }
+            return 0;
+          });
+
+          const tbody = document.getElementById('bom-body');
+          const empty = document.getElementById('bom-empty');
+
+          if (rows.length === 0) {
+            tbody.innerHTML = '';
+            empty.hidden = false;
+          } else {
+            empty.hidden = true;
+            tbody.innerHTML = rows.map(c => {
+              const val  = getValue(c);
+              const desc = getDesc(c);
+              const valCell = val
+                ? `<span class="value-cell">${esc(val)}</span>`
+                : `<span class="missing">—</span>`;
+              const descCell = desc ? esc(desc) : '';
+              return `<tr>
+                <td class="ref-cell"><a class="ref-link" href="viewer.html#ref=${esc(c.ref)}">${esc(c.ref)}</a></td>
+                <td><span class="badge badge-${esc(c.comp_type)}">${esc(TYPE_LABEL[c.comp_type] || c.comp_type)}</span></td>
+                <td>${valCell}</td>
+                <td class="note-cell">${descCell}</td>
+              </tr>`;
+            }).join('');
+          }
+
+          const total = allRows.length;
+          const shown = rows.length;
+          document.getElementById('bom-count').textContent =
+            shown === total ? `${total} componentes` : `${shown} de ${total}`;
+        }
+
+        /* ── Sort on header click ── */
+
+        document.querySelectorAll('th[data-col]').forEach(th => {
+          th.addEventListener('click', () => {
+            const col = th.dataset.col;
+            if (sortCol === col) {
+              sortDir *= -1;
+            } else {
+              sortCol = col;
+              sortDir = 1;
+            }
+            document.querySelectorAll('th').forEach(t =>
+              t.classList.remove('sort-asc', 'sort-desc'));
+            th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+            render();
+          });
+        });
+
+        document.querySelector('th[data-col="ref"]').classList.add('sort-asc');
+
+        /* ── Search ── */
+
+        document.getElementById('bom-search').addEventListener('input', e => {
+          searchQ = e.target.value.trim();
+          render();
+        });
+
+        /* ── Load project metadata ── */
+        fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(project => {
+          const name = project?.name || 'PCB Reverser';
+          document.title = `BOM — ${name}`;
+          const navName = document.getElementById('nav-project-name');
+          if (navName) navName.textContent = name;
+          const footerName = document.getElementById('footer-project-name');
+          if (footerName) footerName.textContent = name;
+        });
+
+        /* ── Load data ── */
+
+        fetch('data/bom.json')
+          .then(r => r.json())
+          .then(data => {
+            allRows = data.components.filter(c => !EXCLUDE.has(c.comp_type));
+
+            // Build type filter buttons
+            const typeCounts = {};
+            allRows.forEach(c => {
+              typeCounts[c.comp_type] = (typeCounts[c.comp_type] || 0) + 1;
+            });
+            const types = Object.keys(typeCounts).sort();
+
+            const tf = document.getElementById('type-filters');
+
+            const allBtn = document.createElement('button');
+            allBtn.className = 'type-btn is-active';
+            allBtn.textContent = 'Todos';
+            allBtn.addEventListener('click', () => {
+              activeType = null;
+              tf.querySelectorAll('.type-btn').forEach(b => b.classList.remove('is-active'));
+              allBtn.classList.add('is-active');
+              render();
+            });
+            tf.appendChild(allBtn);
+
+            types.forEach(t => {
+              const btn = document.createElement('button');
+              btn.className = 'type-btn';
+              btn.textContent = `${TYPE_LABEL[t] || t} ${typeCounts[t]}`;
+              btn.addEventListener('click', () => {
+                const same = activeType === t;
+                activeType = same ? null : t;
+                tf.querySelectorAll('.type-btn').forEach(b => b.classList.remove('is-active'));
+                (activeType ? btn : allBtn).classList.add('is-active');
+                render();
+              });
+              tf.appendChild(btn);
+            });
+
+            render();
+          })
+          .catch(err => {
+            document.getElementById('bom-body').innerHTML =
+              '<tr><td colspan="4" class="bom-empty">Error al cargar bom.json.</td></tr>';
+            console.error(err);
+          });
+      })();
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+  </body>
+</html>
