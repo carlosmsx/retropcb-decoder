@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Tiles (regenerables — considerar git-lfs si se quieren versionar)
+tiles/
+
+# Imágenes fuente grandes
+img/*.png
+img/*.tif
+img/*.tiff
+
+# Temporales
+temp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Node
+node_modules/

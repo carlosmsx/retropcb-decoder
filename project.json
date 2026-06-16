@@ -1,0 +1,42 @@
+{
+  "name": "Mi Placa PCB",
+  "slug": "my-pcb",
+  "description": "",
+
+  "scan": {
+    "dpi": 600,
+    "layers": [
+      { "id": "pcb_a", "label": "Component side (A)", "default": true },
+      { "id": "pcb_b", "label": "Solder side (B)" },
+      { "id": "silk",  "label": "Silkscreen" }
+    ]
+  },
+
+  "tiles": {
+    "size": 512,
+    "quality": 88,
+    "format": "jpg"
+  },
+
+  "grid": {
+    "pitch_mm": 2.54,
+    "pitch_px": null,
+    "origin_px": [null, null]
+  },
+
+  "analysis": {
+    "silkscreen_hsv_lower": [0, 0, 145],
+    "silkscreen_hsv_upper": [179, 70, 255],
+    "drill_dark_value": 52,
+    "drill_min_radius": 1.8,
+    "drill_max_radius": 16,
+    "drill_min_circularity": 0.5,
+    "drill_min_fill": 0.38,
+    "canny_low": 45,
+    "canny_high": 130
+  },
+
+  "deploy": {
+    "base_url": ""
+  }
+}
