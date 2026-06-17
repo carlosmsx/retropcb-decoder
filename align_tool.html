@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Align — PCB Reverser</title>
+  <style>
+    :root {
+      --bg:     #12161a;
+      --panel:  #1c2128;
+      --border: #2d3540;
+      --text:   #d8dde3;
+      --muted:  #5a6370;
+      --accent: #29d28f;
+      --red:    #ff4e4e;
+      --green:  #29d28f;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .sep {
+      flex: 1;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      height: 32px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color .15s, background .15s;
+    }
+    button:hover { border-color: var(--accent); }
+    button:disabled { opacity: .35; cursor: default; }
+
+    .btn-a { border-color: #29d28f55; color: var(--green); }
+    .btn-a:hover { background: #29d28f18; }
+    .btn-b { border-color: #ff4e4e55; color: var(--red); }
+    .btn-b:hover { background: #ff4e4e18; }
+    .btn-b.active { background: #ff4e4e28; border-color: var(--red); }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider-wrap label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 180px;
+      height: 4px;
+      background: linear-gradient(
+        to right,
+        var(--green) 0%,
+        var(--green) var(--pct, 50%),
+        var(--red)   var(--pct, 50%),
+        var(--red)   100%
+      );
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 0 2px var(--border);
+      cursor: pointer;
+    }
+
+    .slider-val {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 36px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      overflow: hidden;
+    }
+
+    /* ── STAGE ───────────────────────────────────────── */
+    .stage {
+      position: relative;
+      overflow: auto;
+      background: #0a0c0e;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      display: inline-block;
+      min-width: 100%;
+      min-height: 100%;
+    }
+
+    #canvas-a,
+    #canvas-b {
+      display: block;
+    }
+
+    #canvas-a {
+      position: relative; /* establishes layout */
+      max-width: 100%;
+      height: auto;
+    }
+
+    #canvas-b {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .placeholder svg {
+      width: 48px; height: 48px;
+      opacity: .3;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────── */
+    aside {
+      border-left: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    aside h2 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+
+    .img-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .img-card-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .tag-a { background: #29d28f22; color: var(--green); }
+    .tag-b { background: #ff4e4e22; color: var(--red); }
+
+    .img-info {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .thumb canvas {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    .thumb .empty {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── STATUS BAR ──────────────────────────────────── */
+    .statusbar {
+      flex: none;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+    }
+
+    .statusbar span + span::before {
+      content: "·";
+      margin-right: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Align</h1>
+
+  <div class="ctrl-group">
+    <button class="btn-a" id="btn-load-a">Cargar lado A</button>
+    <button class="btn-b" id="btn-load-b">Cargar lado B</button>
+    <button class="btn-b" id="btn-flip-b"  title="Flip horizontal lado B">⟺ Flip B H</button>
+    <button class="btn-b"       id="btn-flip-bv" title="Flip vertical lado B">⥯ Flip B V</button>
+  </div>
+
+  <button id="btn-export" disabled>Exportar JSON</button>
+
+  <div class="sep"></div>
+
+  <div class="slider-wrap">
+    <label>A</label>
+    <input type="range" id="opacity-slider" min="0" max="100" value="50">
+    <label>B</label>
+    <span class="slider-val" id="slider-val">50%</span>
+  </div>
+</header>
+
+<div class="body">
+  <div class="stage" id="stage">
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="canvas-a"></canvas>
+      <canvas id="canvas-b"></canvas>
+      <div class="placeholder" id="placeholder">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="40" height="40" rx="4" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M12 20h8M28 20h8M12 28h8M28 28h8M20 12v8M20 28v8M28 12v8M28 28v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Cargá las imágenes de ambos lados del PCB</span>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="img-card">
+      <div class="img-card-header">
+        <span class="tag tag-a">A</span>
+        <span style="font-size:12px;font-weight:600;">Lado componentes</span>
+      </div>
+      <div class="thumb" id="thumb-a"><span class="empty">Sin cargar</span></div>
+      <div class="img-info" id="info-a">—</div>
+    </div>
+
+    <div class="img-card">
+      <div class="img-card-header">
+        <span class="tag tag-b">B</span>
+        <span style="font-size:12px;font-weight:600;">Lado soldadura (espejado)</span>
+      </div>
+      <div class="thumb" id="thumb-b"><span class="empty">Sin cargar</span></div>
+      <div class="img-info" id="info-b">—</div>
+    </div>
+
+    <div>
+      <h2>Instrucciones</h2>
+      <p class="hint">
+        1. Cargá el lado A (componentes).<br>
+        2. Cargá el lado B.<br>
+        3. Usá el slider para ver el overlay y verificar el alineamiento.<br>
+        4. El verde es el lado A, el rojo es el lado B.
+      </p>
+    </div>
+  </aside>
+</div>
+
+<div class="statusbar">
+  <span id="status-a">Lado A: —</span>
+  <span id="status-b">Lado B: —</span>
+  <span id="status-overlay">Overlay: —</span>
+</div>
+
+<script>
+  /* ── State ─────────────────────────────────────── */
+  const state = {
+    imgA: null,   // HTMLImageElement
+    imgB: null,
+    wA: 0, hA: 0,
+    wB: 0, hB: 0,
+    nameA: null,
+    nameB: null,
+    flipB: false,
+    flipBV: false,
+  };
+
+  /* ── DOM refs ──────────────────────────────────── */
+  const canvasA      = document.getElementById("canvas-a");
+  const canvasB      = document.getElementById("canvas-b");
+  const ctxA         = canvasA.getContext("2d");
+  const ctxB         = canvasB.getContext("2d");
+  const placeholder  = document.getElementById("placeholder");
+  const slider       = document.getElementById("opacity-slider");
+  const sliderVal    = document.getElementById("slider-val");
+  const thumbA       = document.getElementById("thumb-a");
+  const thumbB       = document.getElementById("thumb-b");
+  const infoA        = document.getElementById("info-a");
+  const infoB        = document.getElementById("info-b");
+  const statusA      = document.getElementById("status-a");
+  const statusB      = document.getElementById("status-b");
+  const statusOverlay= document.getElementById("status-overlay");
+
+  /* ── Slider ────────────────────────────────────── */
+  function updateSlider() {
+    const v = Number(slider.value);
+    slider.style.setProperty("--pct", `${100 - v}%`);
+    sliderVal.textContent = `${v}%`;
+    canvasB.style.opacity = v / 100;
+  }
+  slider.addEventListener("input", updateSlider);
+  updateSlider();
+
+  /* ── Draw helpers ──────────────────────────────── */
+  function drawA(img) {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    canvasA.width  = w;
+    canvasA.height = h;
+
+    // Green tint on A
+    ctxA.drawImage(img, 0, 0);
+    ctxA.globalCompositeOperation = "multiply";
+    ctxA.fillStyle = "#00ff88";
+    ctxA.fillRect(0, 0, w, h);
+    ctxA.globalCompositeOperation = "source-over";
+  }
+
+  function drawB(img, refW, refH, flipH, flipV) {
+    const w = refW || img.naturalWidth;
+    const h = refH || img.naturalHeight;
+    canvasB.width  = w;
+    canvasB.height = h;
+
+    ctxB.save();
+    ctxB.translate(flipH ? w : 0, flipV ? h : 0);
+    ctxB.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+    ctxB.drawImage(img, 0, 0, w, h);
+    ctxB.restore();
+
+    // Red tint
+    ctxB.globalCompositeOperation = "multiply";
+    ctxB.fillStyle = "#ff4444";
+    ctxB.fillRect(0, 0, w, h);
+    ctxB.globalCompositeOperation = "source-over";
+  }
+
+  function makeThumbnail(img, container, flipped) {
+    container.innerHTML = "";
+    const tc = document.createElement("canvas");
+    const MAX = 200;
+    const scale = Math.min(MAX / img.naturalWidth, MAX / img.naturalHeight, 1);
+    tc.width  = Math.round(img.naturalWidth  * scale);
+    tc.height = Math.round(img.naturalHeight * scale);
+    const tctx = tc.getContext("2d");
+    if (flipped) {
+      tctx.translate(tc.width, 0);
+      tctx.scale(-1, 1);
+    }
+    tctx.drawImage(img, 0, 0, tc.width, tc.height);
+    container.appendChild(tc);
+  }
+
+  function fmt(n) { return n.toLocaleString("es"); }
+  function fmtSize(w, h) { return `${fmt(w)} × ${fmt(h)} px`; }
+
+  /* ── Load image helper ─────────────────────────── */
+  async function pickImage(opts = {}) {
+    if (!window.showOpenFilePicker) {
+      // Fallback: <input type="file">
+      return new Promise((resolve) => {
+        const inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = "image/*";
+        inp.onchange = () => {
+          const file = inp.files[0];
+          if (!file) return resolve(null);
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => resolve({ img, name: file.name });
+          img.src = url;
+        };
+        inp.click();
+      });
+    }
+
+    try {
+      const [fh] = await window.showOpenFilePicker({
+        types: [{ description: "Imágenes", accept: { "image/*": [".jpg",".jpeg",".png",".tif",".tiff",".bmp"] } }],
+        multiple: false,
+        ...opts,
+      });
+      const file = await fh.getFile();
+      const url  = URL.createObjectURL(file);
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ img, name: file.name, handle: fh });
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    } catch (e) {
+      if (e.name !== "AbortError") console.error(e);
+      return null;
+    }
+  }
+
+  /* ── Load A ────────────────────────────────────── */
+  document.getElementById("btn-load-a").addEventListener("click", async () => {
+    const result = await pickImage();
+    if (!result) return;
+    const { img, name } = result;
+
+    state.imgA  = img;
+    state.nameA = name;
+    state.wA    = img.naturalWidth;
+    state.hA    = img.naturalHeight;
+
+    drawA(img);
+    makeThumbnail(img, thumbA, false);
+    placeholder.style.display = "none";
+
+    infoA.textContent = `${name}\n${fmtSize(state.wA, state.hA)}`;
+    statusA.textContent = `Lado A: ${fmtSize(state.wA, state.hA)}`;
+    updateExportBtn();
+
+    // Redraw B at A's dimensions if already loaded
+    if (state.imgB) {
+      drawB(state.imgB, state.wA, state.hA);
+      updateOverlayStatus();
+    }
+  });
+
+  /* ── Load B ────────────────────────────────────── */
+  document.getElementById("btn-load-b").addEventListener("click", async () => {
+    const result = await pickImage();
+    if (!result) return;
+    const { img, name } = result;
+
+    state.imgB  = img;
+    state.nameB = name;
+    state.wB    = img.naturalWidth;
+    state.hB    = img.naturalHeight;
+
+    const refW = state.imgA ? state.wA : state.wB;
+    const refH = state.imgA ? state.hA : state.hB;
+    drawB(img, refW, refH, state.flipB, state.flipBV);
+
+    makeThumbnail(img, thumbB, true);
+    placeholder.style.display = "none";
+
+    infoB.textContent = `${name}\n${fmtSize(state.wB, state.hB)}`;
+    statusB.textContent = `Lado B: ${fmtSize(state.wB, state.hB)}`;
+    updateExportBtn();
+
+    updateOverlayStatus();
+  });
+
+  /* ── Flip B ────────────────────────────────────── */
+  function redrawB() {
+    if (!state.imgB) return;
+    const refW = state.imgA ? state.wA : state.wB;
+    const refH = state.imgA ? state.hA : state.hB;
+    drawB(state.imgB, refW, refH, state.flipB, state.flipBV);
+    makeThumbnail(state.imgB, thumbB, state.flipB);
+  }
+
+  const btnFlip = document.getElementById("btn-flip-b");
+  btnFlip.addEventListener("click", () => {
+    state.flipB = !state.flipB;
+    btnFlip.classList.toggle("active", state.flipB);
+    redrawB();
+  });
+
+  const btnFlipV = document.getElementById("btn-flip-bv");
+  btnFlipV.addEventListener("click", () => {
+    state.flipBV = !state.flipBV;
+    btnFlipV.classList.toggle("active", state.flipBV);
+    redrawB();
+  });
+
+  /* ── Export ────────────────────────────────────── */
+  const btnExport = document.getElementById("btn-export");
+
+  function updateExportBtn() {
+    btnExport.disabled = !state.imgA && !state.imgB;
+  }
+
+  btnExport.addEventListener("click", () => {
+    const data = {
+      side_a: state.nameA || null,
+      side_b: state.nameB || null,
+      flip_h: state.flipB,
+      flip_v: state.flipBV,
+      alignment: null,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "align.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  function updateOverlayStatus() {
+    if (!state.imgA || !state.imgB) return;
+    const match = (state.wA === state.wB && state.hA === state.hB);
+    statusOverlay.textContent = match
+      ? "Overlay: dimensiones coinciden ✓"
+      : `Overlay: B escalado a ${fmtSize(state.wA, state.hA)}`;
+  }
+</script>
+
+</body>
+</html>
