@@ -2,10 +2,11 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "pcb-reverser-static",
+      "name": "PCB Reverser",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-l", "4174", "."],
-      "port": 4174
+      "runtimeArgs": ["serve", "."],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

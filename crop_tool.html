@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recorte — PCB Reverser</title>
+    <style>
+      :root {
+        --ink: #17211f;
+        --muted: #596561;
+        --paper: #f7f7f2;
+        --panel: #ffffff;
+        --line: #d8ded9;
+        --green: #176b58;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        display: grid;
+        grid-template-rows: 52px 1fr;
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+        flex-shrink: 0;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 720;
+      }
+
+      .sep {
+        width: 1px;
+        height: 24px;
+        background: var(--line);
+        margin: 0 2px;
+      }
+
+      .nav-links {
+        margin-left: auto;
+        display: flex;
+        gap: 18px;
+      }
+
+      .nav-links a {
+        font-size: 14px;
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .nav-links a:hover { color: var(--green); }
+
+      main {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        overflow: hidden;
+      }
+
+      .stage {
+        overflow: auto;
+        background: #101715;
+        position: relative;
+      }
+
+      canvas {
+        display: block;
+        cursor: crosshair;
+        user-select: none;
+      }
+
+      aside {
+        background: var(--panel);
+        border-left: 1px solid var(--line);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow-y: auto;
+      }
+
+      aside h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 720;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .field-row label {
+        min-width: 28px;
+        color: var(--muted);
+      }
+
+      .field-row input {
+        width: 80px;
+        min-height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 4px 7px;
+        font: inherit;
+        font-size: 13px;
+      }
+
+      .field-row input:focus {
+        outline: none;
+        border-color: var(--green);
+      }
+
+      .point-block {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .point-block.is-active {
+        border-color: var(--green);
+        background: #f0faf7;
+      }
+
+      .point-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .point-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .readout {
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      button {
+        min-height: 36px;
+        border: 1px solid var(--ink);
+        border-radius: 5px;
+        background: var(--panel);
+        color: var(--ink);
+        font: inherit;
+        font-weight: 720;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+
+      button:hover { background: var(--paper); }
+
+      .btn-primary {
+        background: var(--green);
+        color: #fff;
+        border-color: var(--green);
+      }
+
+      .btn-primary:hover { opacity: 0.9; background: var(--green); }
+
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .output-area {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .output-area label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 140px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        background: var(--paper);
+      }
+
+      .dim-readout {
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .sidebar-arrows {
+        display: grid;
+        grid-template-columns: repeat(3, 26px);
+        grid-template-rows: repeat(3, 26px);
+        gap: 2px;
+        margin-top: 4px;
+      }
+
+      .sidebar-arrow-btn {
+        min-height: unset;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-weight: 400;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      /* Corner controls en el preview modal */
+      .preview-stage {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+
+      .corner-ctrl {
+        position: absolute;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .corner-ctrl-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 30px);
+        grid-template-rows: repeat(3, 30px);
+        gap: 2px;
+        pointer-events: all;
+      }
+
+      .corner-ctrl-btn {
+        min-height: unset;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        border: 1.5px solid rgba(255,255,255,0.3);
+        background: rgba(16, 23, 21, 0.82);
+        color: #fff;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .corner-ctrl-btn:hover { background: rgba(40,60,55,0.95); }
+
+      .corner-ctrl-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 6px rgba(0,0,0,0.9);
+        grid-column: 2;
+        grid-row: 2;
+        align-self: center;
+        justify-self: center;
+      }
+
+      .thumb-section {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .thumb-section label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      #thumb-canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 5px;
+        border: 1px solid var(--line);
+        background: #101715;
+      }
+
+      .nudge-step-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .nudge-step-row input {
+        width: 52px;
+        min-height: 26px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 3px 6px;
+        font: inherit;
+        font-size: 12px;
+      }
+
+      #drop-zone {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #f7f7f2;
+        pointer-events: none;
+      }
+
+      #drop-zone.hidden { display: none; }
+
+      #drop-zone-label {
+        font-size: 15px;
+        opacity: 0.7;
+      }
+
+      #file-input { display: none; }
+
+      .preview-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(0,0,0,0.82);
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .preview-modal.is-open {
+        display: flex;
+      }
+
+      .preview-modal-inner {
+        background: var(--panel);
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-width: min(1200px, calc(100vw - 32px));
+        max-height: calc(100dvh - 32px);
+        box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+      }
+
+      .preview-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+
+      .preview-modal-header span {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .preview-modal-body {
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #101715;
+        flex: 1;
+      }
+
+      #preview-canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Recorte de imagen</h1>
+      <span class="sep"></span>
+      <button id="load-btn" type="button">Cargar imagen</button>
+      <input id="file-input" type="file" accept="image/*">
+      <button id="reset-btn" type="button">Resetear puntos</button>
+      <button id="load-json-btn" type="button">Cargar JSON</button>
+      <button id="preview-btn" type="button">Vista previa</button>
+      <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="stage" id="stage">
+        <canvas id="canvas"></canvas>
+        <div class="preview-modal" id="preview-modal">
+      <div class="preview-modal-inner">
+        <div class="preview-modal-header">
+          <span id="preview-modal-title">Vista previa del recorte</span>
+          <button id="preview-close-btn" type="button">✕ Cerrar</button>
+        </div>
+        <div class="preview-modal-body">
+          <div class="preview-stage" id="preview-stage">
+            <canvas id="preview-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="drop-zone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span id="drop-zone-label">Cargá una imagen para empezar</span>
+        </div>
+      </div>
+
+      <aside>
+        <h2>Puntos de recorte</h2>
+        <p class="hint">Arrastrá los 4 puntos a las esquinas reales de la placa. El polígono define el área que se va a rectificar.</p>
+
+        <div id="points-ui"></div>
+
+        <div class="nudge-step-row">
+          Paso: <input id="nudge-step" type="number" min="1" max="100" value="1"> px
+        </div>
+
+        <div class="sep" style="width:100%; height:1px; margin: 0;"></div>
+
+        <div class="thumb-section">
+          <label>Preview en vivo</label>
+          <canvas id="thumb-canvas"></canvas>
+          <div class="dim-readout" id="dim-readout">— × — px</div>
+        </div>
+
+        <div class="sep" style="width:100%; height:1px; margin: 0;"></div>
+
+        <div class="btn-row">
+          <button class="btn-primary" id="export-btn" type="button">Exportar JSON</button>
+          <button id="copy-btn" type="button">Copiar</button>
+        </div>
+
+        <div class="output-area">
+          <label>JSON de salida</label>
+          <textarea id="output" spellcheck="false" readonly></textarea>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const canvas      = document.getElementById("canvas");
+      const ctx         = canvas.getContext("2d");
+      const stage       = document.getElementById("stage");
+      const dropZone    = document.getElementById("drop-zone");
+      const fileInput   = document.getElementById("file-input");
+      const loadBtn     = document.getElementById("load-btn");
+      const resetBtn    = document.getElementById("reset-btn");
+      const exportBtn   = document.getElementById("export-btn");
+      const copyBtn     = document.getElementById("copy-btn");
+      const outputTA    = document.getElementById("output");
+      const dimReadout  = document.getElementById("dim-readout");
+      const pointsUi    = document.getElementById("points-ui");
+      const thumbCanvas = document.getElementById("thumb-canvas");
+      const thumbCtx    = thumbCanvas.getContext("2d");
+      const nudgeStepInput = document.getElementById("nudge-step");
+
+      const POINT_COLORS = ["#29d28f", "#ffb830", "#ff4ebe", "#5bc8ff"];
+      const POINT_LABELS = ["1 — Sup. izq.", "2 — Sup. der.", "3 — Inf. der.", "4 — Inf. izq."];
+      const HANDLE_R     = 10;
+      const HANDLE_HIT   = 18;
+
+      let image       = null;
+      let imageName   = "";
+      let displayScale = 1;
+
+      // Points in IMAGE coordinates (full resolution)
+      let points = [];
+      let dragging = null;  // index of point being dragged
+      let hovering = null;
+
+      // ── Init ──────────────────────────────────────────────────────────────────
+
+      function defaultPoints(w, h) {
+        const pad = Math.round(Math.min(w, h) * 0.04);
+        return [
+          { x: pad,     y: pad },
+          { x: w - pad, y: pad },
+          { x: w - pad, y: h - pad },
+          { x: pad,     y: h - pad },
+        ];
+      }
+
+      function loadImage(file) {
+        imageName = file.name;
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          image = img;
+          _thumbSrc = null;
+          URL.revokeObjectURL(url);
+          fitToStage();
+          if (points.length !== 4) points = defaultPoints(image.naturalWidth, image.naturalHeight);
+          buildPointsUI();
+          render();
+          scheduleThumb();
+          dropZone.classList.add("hidden");
+        };
+        img.src = url;
+      }
+
+      function fitToStage() {
+        const sw = stage.clientWidth;
+        const sh = stage.clientHeight;
+        displayScale = Math.min(1, Math.min(sw / image.naturalWidth, sh / image.naturalHeight));
+        canvas.width  = Math.round(image.naturalWidth  * displayScale);
+        canvas.height = Math.round(image.naturalHeight * displayScale);
+      }
+
+      // ── Coordinate helpers ────────────────────────────────────────────────────
+
+      function toDisplay(p) {
+        return { x: p.x * displayScale, y: p.y * displayScale };
+      }
+
+      function toImage(dx, dy) {
+        return { x: dx / displayScale, y: dy / displayScale };
+      }
+
+      function canvasXY(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left) * (canvas.width / rect.width),
+          y: (event.clientY - rect.top)  * (canvas.height / rect.height),
+        };
+      }
+
+      function nearestPoint(dx, dy) {
+        let best = null;
+        let bestD = Infinity;
+        for (let i = 0; i < points.length; i++) {
+          const dp = toDisplay(points[i]);
+          const d = Math.hypot(dx - dp.x, dy - dp.y);
+          if (d < bestD) { best = i; bestD = d; }
+        }
+        return bestD <= HANDLE_HIT ? best : null;
+      }
+
+      // ── Render ────────────────────────────────────────────────────────────────
+
+      function render() {
+        if (!image) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        if (points.length !== 4) return;
+
+        const dp = points.map(toDisplay);
+
+        // Dark overlay over the whole canvas
+        ctx.fillStyle = "rgba(0,0,0,0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Re-draw image clipped to polygon (clears the dark inside the crop area)
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(dp[0].x, dp[0].y);
+        for (let i = 1; i < dp.length; i++) ctx.lineTo(dp[i].x, dp[i].y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Polygon edges
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(dp[0].x, dp[0].y);
+        for (let i = 1; i < dp.length; i++) ctx.lineTo(dp[i].x, dp[i].y);
+        ctx.closePath();
+        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Handles
+        for (let i = 0; i < dp.length; i++) {
+          const p = dp[i];
+          const isHover = hovering === i;
+          const isDrag  = dragging === i;
+          const color   = POINT_COLORS[i];
+
+          ctx.save();
+          // Shadow glow
+          ctx.shadowColor = color;
+          ctx.shadowBlur  = isDrag || isHover ? 12 : 6;
+          // Outer ring
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, HANDLE_R + (isDrag ? 3 : 0), 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+          // Inner dot
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "#fff";
+          ctx.fill();
+          // Label
+          ctx.font = "bold 13px system-ui";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillStyle = "#fff";
+          ctx.fillText(String(i + 1), p.x, p.y - HANDLE_R - 4);
+          ctx.restore();
+        }
+
+        updateDimReadout();
+        updatePointsUI();
+      }
+
+      // ── Dimensions ────────────────────────────────────────────────────────────
+
+      function estimateDimensions() {
+        if (points.length !== 4) return null;
+        const [p0, p1, p2, p3] = points;
+        const topW    = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+        const bottomW = Math.hypot(p2.x - p3.x, p2.y - p3.y);
+        const leftH   = Math.hypot(p3.x - p0.x, p3.y - p0.y);
+        const rightH  = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        return {
+          w: Math.round((topW + bottomW) / 2),
+          h: Math.round((leftH + rightH) / 2),
+        };
+      }
+
+      function updateDimReadout() {
+        const d = estimateDimensions();
+        dimReadout.textContent = d ? `${d.w} × ${d.h} px` : "— × — px";
+      }
+
+      // ── Thumbnail en vivo ─────────────────────────────────────────────────────
+
+      let _thumbSrc = null;
+
+      function buildThumbSrc() {
+        if (!image) return null;
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(image.naturalWidth, image.naturalHeight));
+        const w = Math.round(image.naturalWidth  * scale);
+        const h = Math.round(image.naturalHeight * scale);
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(image, 0, 0, w, h);
+        _thumbSrc = { canvas: c, scale };
+        return _thumbSrc;
+      }
+
+      let _thumbRafId = null;
+
+      function scheduleThumb() {
+        if (_thumbRafId) return;
+        _thumbRafId = requestAnimationFrame(() => {
+          _thumbRafId = null;
+          renderThumbnail();
+        });
+      }
+
+      function renderThumbnail() {
+        if (!image || points.length !== 4) return;
+        const src = _thumbSrc || buildThumbSrc();
+        const d = estimateDimensions();
+        if (!d) return;
+
+        const tw = thumbCanvas.parentElement.clientWidth - 2; // -2 for border
+        const th = Math.round(d.h * (tw / d.w));
+        thumbCanvas.width  = tw;
+        thumbCanvas.height = th;
+        thumbCtx.clearRect(0, 0, tw, th);
+
+        const s = src.scale;
+        const scaledPts = points.map(p => ({ x: p.x * s, y: p.y * s }));
+        drawPerspectiveStrips(thumbCtx, src.canvas, scaledPts, tw, th, 60);
+        updateDimReadout();
+      }
+
+      const DIRS = [
+        { dx:  0, dy: -1, symbol: "↑", col: 2, row: 1 },
+        { dx: -1, dy:  0, symbol: "←", col: 1, row: 2 },
+        { dx:  1, dy:  0, symbol: "→", col: 3, row: 2 },
+        { dx:  0, dy:  1, symbol: "↓", col: 2, row: 3 },
+      ];
+
+      // ── Nudge ─────────────────────────────────────────────────────────────────
+
+      function nudgePoint(i, dx, dy) {
+        const step = Math.max(1, parseInt(nudgeStepInput.value) || 1);
+        points[i] = {
+          x: Math.max(0, Math.min(image?.naturalWidth  ?? Infinity, points[i].x + dx * step)),
+          y: Math.max(0, Math.min(image?.naturalHeight ?? Infinity, points[i].y + dy * step)),
+        };
+        updatePointsUI();
+        render();
+        scheduleThumb();
+        if (previewModal.classList.contains("is-open")) renderPreview();
+      }
+
+      // ── Points sidebar UI ─────────────────────────────────────────────────────
+
+      function buildPointsUI() {
+        pointsUi.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+          const block = document.createElement("div");
+          block.className = "point-block";
+          block.id = `point-block-${i}`;
+
+          const labelRow = document.createElement("div");
+          labelRow.className = "point-label";
+          const dot = document.createElement("span");
+          dot.className = "point-dot";
+          dot.style.background = POINT_COLORS[i];
+          labelRow.append(dot, POINT_LABELS[i]);
+
+          const xRow = makeFieldRow("X", `px-${i}`, () => onCoordInput(i, "x"));
+          const yRow = makeFieldRow("Y", `py-${i}`, () => onCoordInput(i, "y"));
+
+          const readout = document.createElement("div");
+          readout.className = "readout";
+          readout.id = `pr-${i}`;
+
+          const arrows = document.createElement("div");
+          arrows.className = "sidebar-arrows";
+          for (const dir of DIRS) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "sidebar-arrow-btn";
+            btn.textContent = dir.symbol;
+            btn.style.gridColumn = dir.col;
+            btn.style.gridRow    = dir.row;
+            btn.style.borderColor = POINT_COLORS[i] + "88";
+            let intervalId = null;
+            btn.addEventListener("mousedown", (e) => {
+              e.preventDefault();
+              nudgePoint(i, dir.dx, dir.dy);
+              intervalId = setInterval(() => nudgePoint(i, dir.dx, dir.dy), 80);
+            });
+            const stop = () => { clearInterval(intervalId); intervalId = null; };
+            btn.addEventListener("mouseup",   stop);
+            btn.addEventListener("mouseleave", stop);
+            arrows.append(btn);
+          }
+
+          block.append(labelRow, xRow, yRow, readout, arrows);
+          pointsUi.append(block);
+        }
+        updatePointsUI();
+      }
+
+      function makeFieldRow(labelText, inputId, onInput) {
+        const row = document.createElement("div");
+        row.className = "field-row";
+        const label = document.createElement("label");
+        label.textContent = labelText;
+        label.htmlFor = inputId;
+        const input = document.createElement("input");
+        input.type = "number";
+        input.id = inputId;
+        input.addEventListener("change", onInput);
+        row.append(label, input);
+        return row;
+      }
+
+      function onCoordInput(i, axis) {
+        const input = document.getElementById(axis === "x" ? `px-${i}` : `py-${i}`);
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && image) {
+          const max = axis === "x" ? image.naturalWidth : image.naturalHeight;
+          points[i][axis] = Math.max(0, Math.min(max, val));
+          render();
+          scheduleThumb();
+        }
+      }
+
+      function updatePointsUI() {
+        for (let i = 0; i < points.length; i++) {
+          const xi = document.getElementById(`px-${i}`);
+          const yi = document.getElementById(`py-${i}`);
+          const ri = document.getElementById(`pr-${i}`);
+          const block = document.getElementById(`point-block-${i}`);
+          if (!xi) continue;
+          xi.value = Math.round(points[i].x);
+          yi.value = Math.round(points[i].y);
+          if (ri) ri.textContent = `(${Math.round(points[i].x)}, ${Math.round(points[i].y)})`;
+          if (block) block.classList.toggle("is-active", dragging === i || hovering === i);
+        }
+      }
+
+      // ── Export ────────────────────────────────────────────────────────────────
+
+      function buildJson() {
+        const d = estimateDimensions();
+        return JSON.stringify({
+          image: imageName,
+          points: points.map(p => ({
+            x: Math.round(p.x),
+            y: Math.round(p.y),
+          })),
+          output_width:  d?.w ?? null,
+          output_height: d?.h ?? null,
+        }, null, 2);
+      }
+
+      exportBtn.addEventListener("click", () => {
+        const json = buildJson();
+        outputTA.value = json;
+        const blob = new Blob([json], { type: "application/json" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = imageName ? imageName.replace(/\.[^.]+$/, "_crop.json") : "crop.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      copyBtn.addEventListener("click", () => {
+        const json = buildJson();
+        outputTA.value = json;
+        navigator.clipboard.writeText(json).catch(() => {});
+        copyBtn.textContent = "Copiado";
+        setTimeout(() => { copyBtn.textContent = "Copiar"; }, 1500);
+      });
+
+      // ── Mouse interaction ─────────────────────────────────────────────────────
+
+      canvas.addEventListener("mousedown", (e) => {
+        if (!image) return;
+        const { x, y } = canvasXY(e);
+        const hit = nearestPoint(x, y);
+        if (hit !== null) {
+          dragging = hit;
+          canvas.style.cursor = "grabbing";
+        }
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (!image) return;
+        const { x, y } = canvasXY(e);
+        if (dragging !== null) {
+          const ip = toImage(x, y);
+          points[dragging] = {
+            x: Math.max(0, Math.min(image.naturalWidth,  ip.x)),
+            y: Math.max(0, Math.min(image.naturalHeight, ip.y)),
+          };
+          render();
+          scheduleThumb();
+        } else {
+          const hit = nearestPoint(x, y);
+          if (hit !== hovering) {
+            hovering = hit;
+            canvas.style.cursor = hit !== null ? "grab" : "crosshair";
+            render();
+          }
+        }
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (dragging !== null) {
+          dragging = null;
+          canvas.style.cursor = "crosshair";
+          render();
+        }
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        if (hovering !== null) {
+          hovering = null;
+          render();
+        }
+      });
+
+      // Touch support
+      canvas.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const { x, y } = canvasXY(touch);
+        const hit = nearestPoint(x, y);
+        if (hit !== null) dragging = hit;
+      }, { passive: false });
+
+      canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        if (dragging === null || !image) return;
+        const touch = e.touches[0];
+        const { x, y } = canvasXY(touch);
+        const ip = toImage(x, y);
+        points[dragging] = {
+          x: Math.max(0, Math.min(image.naturalWidth,  ip.x)),
+          y: Math.max(0, Math.min(image.naturalHeight, ip.y)),
+        };
+        render();
+      }, { passive: false });
+
+      canvas.addEventListener("touchend", () => { dragging = null; });
+
+      // ── Load / Reset ──────────────────────────────────────────────────────────
+
+      async function fetchImage(name) {
+        const candidates = [name, `img/${name}`];
+        for (const path of candidates) {
+          try {
+            const res = await fetch(path);
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            const file = new File([blob], name, { type: blob.type });
+            loadImage(file);
+            return;
+          } catch { /* continuar */ }
+        }
+        // Fallback: no se encontró en el servidor
+        fileInput.click();
+      }
+
+      loadBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files[0]) loadImage(e.target.files[0]);
+      });
+
+      const loadJsonBtn = document.getElementById("load-json-btn");
+
+      loadJsonBtn.addEventListener("click", async () => {
+        let jsonHandle;
+        try {
+          [jsonHandle] = await window.showOpenFilePicker({
+            types: [{ description: "Crop JSON", accept: { "application/json": [".json"] } }],
+          });
+        } catch { return; }
+
+        const jsonFile = await jsonHandle.getFile();
+        let data;
+        try {
+          data = JSON.parse(await jsonFile.text());
+        } catch {
+          alert("No se pudo leer el JSON.");
+          return;
+        }
+
+        if (!Array.isArray(data.points) || data.points.length !== 4) {
+          alert("El JSON no tiene 4 puntos válidos.");
+          return;
+        }
+
+        points = data.points.map(p => ({ x: Number(p.x), y: Number(p.y) }));
+        outputTA.value = JSON.stringify(data, null, 2);
+        buildPointsUI();
+
+        if (image) {
+          render();
+          return;
+        }
+
+        if (data.image) {
+          try {
+            // Abre el picker de imagen en la misma carpeta que el JSON
+            const [imgHandle] = await window.showOpenFilePicker({
+              startIn: jsonHandle,
+              types: [{ description: "Imagen", accept: { "image/*": [".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"] } }],
+            });
+            loadImage(await imgHandle.getFile());
+          } catch { /* usuario canceló */ }
+        }
+      });
+
+
+      stage.addEventListener("dragover", (e) => e.preventDefault());
+      stage.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file?.type.startsWith("image/")) loadImage(file);
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (!image) return;
+        points = defaultPoints(image.naturalWidth, image.naturalHeight);
+        updatePointsUI();
+        render();
+        scheduleThumb();
+      });
+
+      window.addEventListener("resize", () => {
+        if (!image) return;
+        fitToStage();
+        render();
+      });
+
+      // ── Preview modal ─────────────────────────────────────────────────────────
+
+      const previewModal     = document.getElementById("preview-modal");
+      const previewCanvas    = document.getElementById("preview-canvas");
+      const previewCloseBtn  = document.getElementById("preview-close-btn");
+      const previewModalTitle = document.getElementById("preview-modal-title");
+      const previewBtn       = document.getElementById("preview-btn");
+      const previewCtx       = previewCanvas.getContext("2d");
+
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function lerpPt(p0, p1, t) { return { x: lerp(p0.x, p1.x, t), y: lerp(p0.y, p1.y, t) }; }
+
+      function drawPerspectiveStrips(oc, img, pts, pw, ph, N = 100) {
+        const [p0, p1, p2, p3] = pts; // TL, TR, BR, BL
+        for (let i = 0; i < N; i++) {
+          const t0 = i / N;
+          const t1 = (i + 1) / N;
+          const tl = lerpPt(p0, p3, t0);
+          const tr = lerpPt(p1, p2, t0);
+          const bl = lerpPt(p0, p3, t1);
+          const dy0 = t0 * ph;
+          const dy1 = t1 * ph;
+          const dx1 = tr.x - tl.x, dys1 = tr.y - tl.y;
+          const dx2 = bl.x - tl.x, dys2 = bl.y - tl.y;
+          const det = dx1 * dys2 - dx2 * dys1;
+          if (Math.abs(det) < 0.001) continue;
+          const ddy = dy1 - dy0;
+          const a =  pw * dys2 / det;
+          const c = -dx2 * pw / det;
+          const b = -ddy * dys1 / det;
+          const d =  dx1 * ddy / det;
+          const e = -(a * tl.x + c * tl.y);
+          const f = dy0 - b * tl.x - d * tl.y;
+          oc.save();
+          oc.beginPath();
+          oc.rect(0, dy0, pw, dy1 - dy0 + 1);
+          oc.clip();
+          oc.transform(a, b, c, d, e, f);
+          oc.drawImage(img, 0, 0);
+          oc.restore();
+        }
+      }
+
+      let _previewSrc = null;
+
+      const CORNER_POSITIONS = [
+        { left: "0%",   top: "0%",   transform: "translate(4px, 4px)"                                     },
+        { left: "100%", top: "0%",   transform: "translate(calc(-100% - 4px), 4px)"                       },
+        { left: "100%", top: "100%", transform: "translate(calc(-100% - 4px), calc(-100% - 4px))"         },
+        { left: "0%",   top: "100%", transform: "translate(4px, calc(-100% - 4px))"                       },
+      ];
+
+      function buildPreviewControls() {
+        const previewStage = document.getElementById("preview-stage");
+        document.querySelectorAll(".corner-ctrl").forEach(el => el.remove());
+        for (let i = 0; i < 4; i++) {
+          const ctrl = document.createElement("div");
+          ctrl.className = "corner-ctrl";
+          ctrl.style.left      = CORNER_POSITIONS[i].left;
+          ctrl.style.top       = CORNER_POSITIONS[i].top;
+          ctrl.style.transform = CORNER_POSITIONS[i].transform;
+          const grid = document.createElement("div");
+          grid.className = "corner-ctrl-grid";
+          for (const dir of DIRS) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "corner-ctrl-btn";
+            btn.textContent = dir.symbol;
+            btn.style.gridColumn  = dir.col;
+            btn.style.gridRow     = dir.row;
+            btn.style.borderColor = POINT_COLORS[i] + "99";
+            let iv = null;
+            btn.addEventListener("mousedown", (e) => {
+              e.preventDefault();
+              nudgePoint(i, dir.dx, dir.dy);
+              iv = setInterval(() => nudgePoint(i, dir.dx, dir.dy), 80);
+            });
+            const stop = () => { clearInterval(iv); iv = null; };
+            btn.addEventListener("mouseup",    stop);
+            btn.addEventListener("mouseleave", stop);
+            grid.append(btn);
+          }
+          const dot = document.createElement("div");
+          dot.className = "corner-ctrl-dot";
+          dot.style.background = POINT_COLORS[i];
+          grid.append(dot);
+          ctrl.append(grid);
+          previewStage.append(ctrl);
+        }
+      }
+
+      function renderPreview() {
+        if (!image || points.length !== 4) return;
+        const d = estimateDimensions();
+        if (!d) return;
+        const MAX = 1400;
+        const scale = Math.min(1, MAX / Math.max(d.w, d.h));
+        const pw = Math.round(d.w * scale);
+        const ph = Math.round(d.h * scale);
+        previewCanvas.width  = pw;
+        previewCanvas.height = ph;
+        previewCtx.clearRect(0, 0, pw, ph);
+        if (!_previewSrc) {
+          const ss = Math.min(1, MAX / Math.max(image.naturalWidth, image.naturalHeight));
+          const sw = Math.round(image.naturalWidth * ss);
+          const sh = Math.round(image.naturalHeight * ss);
+          const sc = document.createElement("canvas");
+          sc.width = sw; sc.height = sh;
+          sc.getContext("2d").drawImage(image, 0, 0, sw, sh);
+          _previewSrc = { canvas: sc, scale: ss };
+        }
+        const s = _previewSrc.scale;
+        drawPerspectiveStrips(previewCtx, _previewSrc.canvas, points.map(p => ({ x: p.x * s, y: p.y * s })), pw, ph, 120);
+        previewModalTitle.textContent = `Vista previa — ${d.w} × ${d.h} px`;
+      }
+
+      function showPreview() {
+        if (!image || points.length !== 4) {
+          alert("Cargá una imagen y definí los 4 puntos primero.");
+          return;
+        }
+        _previewSrc = null;
+        renderPreview();
+        buildPreviewControls();
+        previewModal.classList.add("is-open");
+      }
+
+      previewBtn.addEventListener("click", showPreview);
+      previewCloseBtn.addEventListener("click", () => previewModal.classList.remove("is-open"));
+      previewModal.addEventListener("click", (e) => {
+        if (e.target === previewModal) previewModal.classList.remove("is-open");
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") previewModal.classList.remove("is-open");
+      });
+    </script>
+  </body>
+</html>
