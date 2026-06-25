@@ -5,75 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pistas — PCB Reverser</title>
+  <link rel="stylesheet" href="src/tools.css">
   <style>
-    :root {
-      --bg:      #12161a;
-      --panel:   #1c2128;
-      --border:  #2d3540;
-      --text:    #d8dde3;
-      --muted:   #5a6370;
-      --accent:  #29d28f;
-      --amber:   #ffb830;
-      --red:     #ff4e4e;
-      --col-a:   #ffe140;
-      --col-b:   #ff4eb4;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg); color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      font-size: 14px;
-      display: flex; flex-direction: column;
-      height: 100dvh; overflow: hidden;
-      user-select: none;
-    }
-
-    /* ── HEADER ── */
-    header {
-      flex: none;
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 12px;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    header h1 { font-size: 15px; font-weight: 700; color: var(--col-a); white-space: nowrap; margin-right: 4px; }
-
-    .sep  { flex: 1; }
-    .vsep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
-
-    button {
-      height: 30px; padding: 0 11px;
-      border: 1px solid var(--border); border-radius: 5px;
-      background: var(--bg); color: var(--text);
-      font: inherit; font-size: 12px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-      transition: border-color .12s, background .12s;
-    }
-    button:hover:not(:disabled) { border-color: var(--accent); }
-    button:disabled { opacity: .35; cursor: default; }
-
-    button.active   { background: #ffe14022; border-color: var(--col-a); color: var(--col-a); }
-    button.active-b { background: #ff4eb422; border-color: var(--col-b); color: var(--col-b); }
-    button.active-g { background: #29d28f22; border-color: var(--accent); color: var(--accent); }
-
-    select {
-      height: 30px; padding: 0 8px;
-      border: 1px solid var(--border); border-radius: 5px;
-      background: var(--bg); color: var(--text);
-      font: inherit; font-size: 12px; cursor: pointer;
-    }
-
-    .ctrl-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+    /* trace_editor-specific overrides */
+    header h1 { color: var(--col-a); margin-right: 4px; }
 
     input[type="number"].width-inp {
-      width: 52px; height: 30px; padding: 0 6px;
-      border: 1px solid var(--border); border-radius: 5px;
-      background: var(--bg); color: var(--text);
-      font: inherit; font-size: 12px; text-align: right;
+      width: 52px; text-align: right;
     }
 
     /* ── VIEWER ── */
@@ -158,15 +96,6 @@
       line-height: 1.7;
     }
 
-    /* ── STATUS BAR ── */
-    .statusbar {
-      flex: none; height: 24px;
-      display: flex; align-items: center;
-      padding: 0 12px; gap: 16px;
-      font-size: 11px; color: var(--muted);
-      background: var(--panel); border-top: 1px solid var(--border);
-    }
-    .statusbar span + span::before { content: "·"; margin-right: 16px; }
   </style>
 </head>
 <body>

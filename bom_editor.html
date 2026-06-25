@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BOM Editor — PCB Reverser</title>
+    
+    <link rel="stylesheet" href="src/tools.css">
+    <style>
+      /* ── Layout ── */
+      body { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+
+      .editor-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        flex-wrap: wrap;
+      }
+
+      .editor-header h1 {
+        font-size: 15px;
+        font-weight: 760;
+        margin: 0 8px 0 0;
+      }
+
+      .editor-header .sep { color: var(--border); margin: 0 2px; }
+
+      .unsaved-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--amber, #e6a817);
+        display: none;
+        flex-shrink: 0;
+      }
+      .unsaved-dot.visible { display: inline-block; }
+
+      .search-box {
+        width: 200px;
+        min-height: 32px;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        margin-left: auto;
+      }
+      .search-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+      /* ── Table wrapper ── */
+      .table-wrap {
+        flex: 1;
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--panel);
+      }
+
+      th {
+        padding: 8px 10px;
+        border-bottom: 2px solid var(--border);
+        text-align: left;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      th.col-del { width: 36px; }
+      th.col-ref { width: 90px; }
+      th.col-type { width: 110px; }
+      th.col-qty { width: 70px; }
+
+      td {
+        padding: 4px 6px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+
+      tr.hidden-row { display: none; }
+
+      tr:last-child td { border-bottom: none; }
+
+      /* ── Cell inputs ── */
+      .cell-input {
+        width: 100%;
+        min-height: 28px;
+        padding: 4px 6px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 13px;
+        box-sizing: border-box;
+      }
+      .cell-input:hover { border-color: var(--border); }
+      .cell-input:focus { border-color: var(--accent); outline: none; background: var(--bg); }
+
+      .cell-ref { font-family: "Courier New", monospace; font-weight: 700; }
+
+      select.cell-input {
+        cursor: pointer;
+        appearance: auto;
+      }
+
+      .cell-qty { text-align: right; }
+
+      input[type="number"].cell-input { text-align: right; }
+
+      /* ── Delete button ── */
+      .btn-del {
+        width: 26px; height: 26px;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 14px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .1s, color .1s;
+      }
+      .btn-del:hover { background: #fde8e8; color: #c0392b; }
+
+      /* ── Empty state ── */
+      .empty-state {
+        padding: 48px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      /* ── Status bar ── */
+      .status-bar {
+        padding: 5px 14px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+        background: var(--panel);
+        flex-shrink: 0;
+        display: flex;
+        gap: 12px;
+      }
+
+      /* ── Badge in select ── */
+      .badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 760;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" id="nav-brand">
+        <span id="nav-project-name">PCB Reverser</span>
+      </a>
+      <nav>
+        <a href="bom.html">BOM</a>
+        <a href="viewer.html">Viewer</a>
+      </nav>
+    </header>
+
+    <div class="editor-header">
+      <h1>BOM Editor</h1>
+      <span class="unsaved-dot" id="unsaved-dot" title="Cambios sin exportar"></span>
+
+      <button class="btn" id="btn-add">+ Agregar</button>
+      <span class="sep">|</span>
+      <button class="btn" id="btn-import">Importar JSON</button>
+      <button class="btn" id="btn-export">Exportar JSON</button>
+
+      <input type="search" class="search-box" id="search" placeholder="Buscar…" autocomplete="off" spellcheck="false">
+      <input type="file" id="file-input" accept=".json" hidden>
+    </div>
+
+    <div class="table-wrap">
+      <table id="bom-table">
+        <thead>
+          <tr>
+            <th class="col-del"></th>
+            <th class="col-ref">Ref</th>
+            <th class="col-type">Tipo</th>
+            <th class="col-qty">Cant.</th>
+            <th>Valor / Part</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody id="bom-body">
+          <tr id="empty-row">
+            <td colspan="6" class="empty-state">
+              Sin componentes. Agregá una fila o importá un JSON.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="status-bar">
+      <span id="status-count">0 componentes</span>
+      <span id="status-msg"></span>
+    </div>
+
+    <script>
+    (() => {
+      'use strict';
+
+      const TYPES = ['IC','CAP','RES','CON','CON50','DIO','TR','IND','RNET','XTAL','JP','RELAY','VIA','OTRO'];
+      const PART_TYPES = new Set(['IC','CON','CON50','RNET']);
+
+      let rows = [];
+      let dirty = false;
+      let searchQ = '';
+
+      const tbody    = document.getElementById('bom-body');
+      const emptyRow = document.getElementById('empty-row');
+      const unsaved  = document.getElementById('unsaved-dot');
+      const statusCount = document.getElementById('status-count');
+      const statusMsg   = document.getElementById('status-msg');
+
+      /* ── Dirty tracking ── */
+
+      function markDirty() {
+        dirty = true;
+        unsaved.classList.add('visible');
+      }
+
+      function markClean() {
+        dirty = false;
+        unsaved.classList.remove('visible');
+      }
+
+      /* ── Status ── */
+
+      function updateStatus(msg) {
+        const visible = rows.filter(r => !r.tr.classList.contains('hidden-row'));
+        statusCount.textContent = `${rows.length} componentes` +
+          (visible.length !== rows.length ? ` (${visible.length} visibles)` : '');
+        if (msg) {
+          statusMsg.textContent = msg;
+          setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+        }
+      }
+
+      /* ── Filter ── */
+
+      function applyFilter() {
+        const q = searchQ.toLowerCase();
+        rows.forEach(r => {
+          if (!q) {
+            r.tr.classList.remove('hidden-row');
+          } else {
+            const hay = [r.ref.value, r.type.value, r.value.value, r.desc.value].join(' ').toLowerCase();
+            r.tr.classList.toggle('hidden-row', !hay.includes(q));
+          }
+        });
+        emptyRow.hidden = rows.length > 0;
+        updateStatus();
+      }
+
+      /* ── Build a table row ── */
+
+      function makeSelect() {
+        const sel = document.createElement('select');
+        sel.className = 'cell-input';
+        TYPES.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = t;
+          sel.appendChild(opt);
+        });
+        return sel;
+      }
+
+      function makeInput(cls, type = 'text', placeholder = '') {
+        const inp = document.createElement('input');
+        inp.type = type;
+        inp.className = `cell-input ${cls}`;
+        inp.placeholder = placeholder;
+        if (type === 'number') { inp.min = 1; inp.step = 1; }
+        return inp;
+      }
+
+      function addRow(data = {}) {
+        const tr = document.createElement('tr');
+
+        // Delete button
+        const tdDel = document.createElement('td');
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn-del';
+        btnDel.title = 'Eliminar fila';
+        btnDel.textContent = '✕';
+        tdDel.appendChild(btnDel);
+        tr.appendChild(tdDel);
+
+        // Ref
+        const tdRef = document.createElement('td');
+        const inpRef = makeInput('cell-ref', 'text', 'U1');
+        inpRef.value = data.ref || '';
+        tdRef.appendChild(inpRef);
+        tr.appendChild(tdRef);
+
+        // Type
+        const tdType = document.createElement('td');
+        const selType = makeSelect();
+        selType.value = data.comp_type || 'IC';
+        tdType.appendChild(selType);
+        tr.appendChild(tdType);
+
+        // Quantity
+        const tdQty = document.createElement('td');
+        const inpQty = makeInput('cell-qty', 'number', '1');
+        inpQty.value = data.qty != null ? data.qty : 1;
+        tdQty.appendChild(inpQty);
+        tr.appendChild(tdQty);
+
+        // Value / Part
+        const tdVal = document.createElement('td');
+        const inpVal = makeInput('cell-value', 'text', '74LS04 / 10k / 100nF…');
+        inpVal.value = data.value || data.part || '';
+        tdVal.appendChild(inpVal);
+        tr.appendChild(tdVal);
+
+        // Description
+        const tdDesc = document.createElement('td');
+        const inpDesc = makeInput('cell-desc', 'text', 'Nota opcional');
+        inpDesc.value = data.note || data.description || '';
+        tdDesc.appendChild(inpDesc);
+        tr.appendChild(tdDesc);
+
+        // Wire up
+        const rec = { tr, ref: inpRef, type: selType, qty: inpQty, value: inpVal, desc: inpDesc };
+        rows.push(rec);
+
+        [inpRef, selType, inpQty, inpVal, inpDesc].forEach(el => {
+          el.addEventListener('input', () => { markDirty(); applyFilter(); });
+          el.addEventListener('change', () => { markDirty(); applyFilter(); });
+        });
+
+        btnDel.addEventListener('click', () => {
+          tr.remove();
+          rows = rows.filter(r => r !== rec);
+          emptyRow.hidden = rows.length > 0;
+          markDirty();
+          updateStatus();
+        });
+
+        tbody.appendChild(tr);
+        emptyRow.hidden = true;
+        applyFilter();
+        markDirty();
+        updateStatus();
+        return rec;
+      }
+
+      /* ── Serialize ── */
+
+      function toJSON() {
+        const components = rows.map(r => {
+          const compType = r.type.value;
+          const val = r.value.value.trim();
+          const entry = {
+            ref: r.ref.value.trim(),
+            comp_type: compType,
+            qty: parseInt(r.qty.value, 10) || 1,
+            note: r.desc.value.trim() || undefined,
+          };
+          if (PART_TYPES.has(compType)) {
+            entry.part = val;
+          } else {
+            entry.value = val;
+          }
+          // remove undefined
+          Object.keys(entry).forEach(k => entry[k] === undefined && delete entry[k]);
+          return entry;
+        });
+        return { components };
+      }
+
+      /* ── Import ── */
+
+      function loadJSON(data) {
+        rows = [];
+        tbody.innerHTML = '';
+        tbody.appendChild(emptyRow);
+
+        const components = data.components || data;
+        if (Array.isArray(components)) {
+          components.forEach(c => addRow(c));
+        }
+        markClean();
+        applyFilter();
+        updateStatus('JSON importado');
+      }
+
+      /* ── Export ── */
+
+      function exportJSON() {
+        const data = toJSON();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = 'bom.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        markClean();
+        updateStatus('Exportado como bom.json — copialo a data/bom.json');
+      }
+
+      /* ── Button handlers ── */
+
+      document.getElementById('btn-add').addEventListener('click', () => {
+        const rec = addRow();
+        rec.ref.focus();
+      });
+
+      document.getElementById('btn-export').addEventListener('click', exportJSON);
+
+      document.getElementById('btn-import').addEventListener('click', () => {
+        document.getElementById('file-input').click();
+      });
+
+      document.getElementById('file-input').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            loadJSON(JSON.parse(ev.target.result));
+          } catch {
+            alert('JSON inválido.');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('search').addEventListener('input', e => {
+        searchQ = e.target.value.trim();
+        applyFilter();
+      });
+
+      /* ── Project name ── */
+      fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(p => {
+        const name = p?.name || 'PCB Reverser';
+        document.title = `BOM Editor — ${name}`;
+        const el = document.getElementById('nav-project-name');
+        if (el) el.textContent = name;
+      });
+
+      /* ── Auto-load data/bom.json if available ── */
+      fetch('data/bom.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) loadJSON(data); })
+        .catch(() => {});
+
+      /* ── Unsaved changes warning ── */
+      window.addEventListener('beforeunload', e => {
+        if (dirty) { e.preventDefault(); e.returnValue = ''; }
+      });
+
+      updateStatus();
+    })();
+    </script>
+  </body>
+</html>

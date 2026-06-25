@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Componentes — PCB Reverser</title>
+  <link rel="stylesheet" href="src/tools.css">
+  <style>
+    :root { --blue: #4e9eff; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    button { font-weight: 600; }
+
+    select {
+      font:
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* ── BODY ── */
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    /* ── COMPONENT PANEL ── */
+    .comp-panel {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-search {
+      flex: none;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-search input {
+      width: 100%;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+    }
+    .panel-search input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+
+    /* ── ACCORDION ── */
+    .acc-group { border-bottom: 1px solid var(--border); }
+
+    .acc-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      cursor: pointer;
+      text-align: left;
+      height: auto;
+      transition: color .12s;
+    }
+    .acc-header:hover { color: var(--text); border-color: transparent; }
+    .acc-header:hover:not(:disabled) { border-color: transparent; }
+
+    .acc-arrow {
+      margin-left: auto;
+      font-size: 9px;
+      transition: transform .15s;
+    }
+    .acc-header.open .acc-arrow { transform: rotate(90deg); }
+
+    .acc-count {
+      background: var(--border);
+      color: var(--text);
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .acc-body {
+      display: none;
+      flex-direction: column;
+    }
+    .acc-body.open { display: flex; }
+
+    /* ── COMPONENT ITEM ── */
+    .comp-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px 5px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background .1s;
+      border-left: 2px solid transparent;
+    }
+    .comp-item:hover { background: #ffffff08; }
+    .comp-item.selected {
+      background: #29d28f14;
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .comp-ref {
+      font-family: "Courier New", monospace;
+      font-weight: 700;
+      font-size: 12px;
+      flex: 1;
+    }
+
+    .comp-pins {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .comp-item.selected .comp-pins { color: var(--accent); opacity: .7; }
+
+    .comp-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--border);
+    }
+    .comp-dot.has-pins { background: var(--accent); }
+
+    .panel-empty {
+      padding: 24px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── VIEWER ── */
+    #viewer {
+      position: relative;
+      overflow: hidden;
+      background: #080b0d;
+      cursor: crosshair;
+    }
+    #viewer.panning { cursor: grabbing; }
+
+    #world {
+      position: absolute;
+      transform-origin: 0 0;
+    }
+    #world img {
+      position: absolute;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    #drill-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    #guide-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .crosshair-line {
+      stroke: rgba(255,255,255,0.35);
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+    }
+
+    /* Drill circles */
+    .drill-circle {
+      fill: none;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      cursor: pointer;
+      transition: stroke .1s, opacity .1s;
+    }
+    .drill-circle.unassigned  { stroke: var(--amber); }
+    .drill-circle.mine        { stroke: var(--accent); stroke-width: 3; }
+    .drill-circle.other       { stroke: var(--muted); opacity: .5; }
+    .drill-circle:hover       { stroke: #fff !important; opacity: 1 !important; }
+
+    /* Drill label */
+    .drill-label {
+      fill: var(--accent);
+      font-size: 10px;
+      font-family: "Courier New", monospace;
+      pointer-events: none;
+      vector-effect: non-scaling-stroke;
+    }
+
+    /* Component shapes */
+    .comp-shape {
+      fill: none;
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .comp-shape.mine  { stroke: var(--accent); fill: #29d28f0d; }
+    .comp-shape.other { stroke: var(--muted);  fill: #5a63700d; }
+
+    .comp-shape-label {
+      font-size: 11px;
+      font-family: "Courier New", monospace;
+      font-weight: 700;
+      pointer-events: none;
+      vector-effect: non-scaling-stroke;
+    }
+    .comp-shape-label.mine  { fill: var(--accent); }
+    .comp-shape-label.other { fill: var(--muted); opacity: .7; }
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+      text-align: center;
+      padding: 24px;
+    }
+
+    /* ── STATUS BAR ── */
+    .statusbar {
+      flex: none;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+    }
+    .statusbar span + span::before { content: "·"; margin-right: 16px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Componentes</h1>
+
+  <select id="layer-sel" title="Capa a mostrar"></select>
+
+  <div class="vsep"></div>
+
+  <button id="btn-load-drills">Cargar drills.json</button>
+  <button id="btn-load-bom">Cargar bom.json</button>
+
+  <div class="sep"></div>
+
+  <button id="btn-save"   disabled>💾 Guardar</button>
+  <button id="btn-export" disabled>↓ Exportar</button>
+
+  <input type="file" id="file-drills" accept=".json" hidden>
+  <input type="file" id="file-bom"    accept=".json" hidden>
+</header>
+
+<div class="body">
+
+  <!-- ── LEFT PANEL ── -->
+  <div class="comp-panel">
+    <div class="panel-search">
+      <input type="search" id="comp-search" placeholder="Buscar ref…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="panel-body" id="panel-body">
+      <div class="panel-empty" id="panel-empty">
+        Cargá un BOM para ver los componentes.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VIEWER ── -->
+  <div id="viewer">
+    <div id="world"></div>
+    <svg id="drill-svg"></svg>
+    <svg id="guide-svg"></svg>
+    <div class="placeholder" id="placeholder">
+      Cargando tiles…
+    </div>
+  </div>
+
+</div>
+
+<div class="statusbar">
+  <span id="sb-zoom">Zoom: —</span>
+  <span id="sb-pos">—</span>
+  <span id="sb-sel">Sin componente seleccionado</span>
+  <span id="sb-assigned">—</span>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ── State ── */
+  const state = {
+    manifest:    null,
+    boardId:     null,
+    x: 0, y: 0,
+    zoom: 1,
+    level: 0,
+    tiles:       new Map(),
+    drills:      [],     // [{id, x, y, r}]
+    components:  [],     // [{ref, comp_type, value?, part?, note?}]
+    assignments: {},     // { ref: Set<drillId> }
+    selectedRef: null,
+    showCrosshair: false,
+    cursorVX: -9999,
+    cursorVY: -9999,
+  };
+
+  /* ── DOM ── */
+  const viewer      = document.getElementById('viewer');
+  const world       = document.getElementById('world');
+  const drillSvg    = document.getElementById('drill-svg');
+  const guideSvg    = document.getElementById('guide-svg');
+  const placeholder = document.getElementById('placeholder');
+  const layerSel    = document.getElementById('layer-sel');
+  const panelBody   = document.getElementById('panel-body');
+  const panelEmpty  = document.getElementById('panel-empty');
+  const compSearch  = document.getElementById('comp-search');
+  const btnSave     = document.getElementById('btn-save');
+  const btnExport   = document.getElementById('btn-export');
+  const sbZoom      = document.getElementById('sb-zoom');
+  const sbPos       = document.getElementById('sb-pos');
+  const sbSel       = document.getElementById('sb-sel');
+  const sbAssigned  = document.getElementById('sb-assigned');
+
+  /* ── Helpers ── */
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function board()     { return state.manifest?.boards?.[state.boardId]; }
+  function levelInfo() { return board()?.levels?.[state.level]; }
+
+  function toViewer(cx, cy) {
+    const r = viewer.getBoundingClientRect();
+    return { x: cx - r.left, y: cy - r.top };
+  }
+  function clientToImage(cx, cy) {
+    const v = toViewer(cx, cy);
+    return { x: (v.x - state.x) / state.zoom, y: (v.y - state.y) / state.zoom };
+  }
+
+  /* ── Zoom / pan ── */
+  function chooseLevel() {
+    const b = board(); if (!b) return;
+    let best = b.levels[0], bestScore = Infinity;
+    for (const lv of b.levels) {
+      const score = Math.abs(Math.log2(state.zoom / lv.scale));
+      if (score < bestScore) { best = lv; bestScore = score; }
+    }
+    state.level = best.level;
+  }
+
+  function setZoom(next, anchorCX, anchorCY) {
+    const b = board(); if (!b) return;
+    const min = Math.min(viewer.clientWidth / b.width, viewer.clientHeight / b.height) * 0.8;
+    const z   = clamp(next, min, 8);
+    const ax  = anchorCX !== undefined ? toViewer(anchorCX, 0).x : viewer.clientWidth / 2;
+    const ay  = anchorCY !== undefined ? toViewer(0, anchorCY).y : viewer.clientHeight / 2;
+    const ix  = (ax - state.x) / state.zoom;
+    const iy  = (ay - state.y) / state.zoom;
+    state.x   = ax - ix * z;
+    state.y   = ay - iy * z;
+    state.zoom = z;
+    render();
+  }
+
+  function fitToScreen() {
+    const b = board(); if (!b) return;
+    state.zoom = Math.min(viewer.clientWidth / b.width, viewer.clientHeight / b.height) * 0.92;
+    state.x    = (viewer.clientWidth  - b.width  * state.zoom) / 2;
+    state.y    = (viewer.clientHeight - b.height * state.zoom) / 2;
+    render();
+  }
+
+  /* ── Tiles ── */
+  function tileKey(l, c, r) { return `${l}/${c}/${r}`; }
+
+  function ensureTile(level, col, row) {
+    const key = tileKey(level, col, row);
+    if (state.tiles.has(key)) return state.tiles.get(key);
+    const img = document.createElement('img');
+    img.src = `tiles/${state.boardId}/${level}/${col}_${row}.jpg`;
+    img.style.cssText = 'position:absolute;display:block;image-rendering:pixelated;';
+    world.appendChild(img);
+    state.tiles.set(key, img);
+    return img;
+  }
+
+  function clearTiles() { state.tiles.clear(); world.replaceChildren(); }
+
+  /* ── Render loop ── */
+  let _rafId = null;
+  let _overlayDirty = true;
+
+  function render() {
+    if (_rafId !== null) return;
+    _rafId = requestAnimationFrame(() => { _rafId = null; doRender(); });
+  }
+
+  function doRender() {
+    const b = board(); if (!b) return;
+    chooseLevel();
+    const info = levelInfo();
+    const ts   = state.manifest.tileSize;
+    const lts  = state.zoom / info.scale;
+
+    world.style.width     = `${info.width}px`;
+    world.style.height    = `${info.height}px`;
+    world.style.transform = `translate(${state.x}px,${state.y}px) scale(${lts})`;
+
+    const vbX = (-state.x / state.zoom).toFixed(2);
+    const vbY = (-state.y / state.zoom).toFixed(2);
+    const vbW = (viewer.clientWidth  / state.zoom).toFixed(2);
+    const vbH = (viewer.clientHeight / state.zoom).toFixed(2);
+    drillSvg.setAttribute('width',   viewer.clientWidth);
+    drillSvg.setAttribute('height',  viewer.clientHeight);
+    drillSvg.setAttribute('viewBox', `${vbX} ${vbY} ${vbW} ${vbH}`);
+
+    const vl = (-state.x / state.zoom) * info.scale;
+    const vt = (-state.y / state.zoom) * info.scale;
+    const vr = ((viewer.clientWidth  - state.x) / state.zoom) * info.scale;
+    const vb = ((viewer.clientHeight - state.y) / state.zoom) * info.scale;
+    const c0 = clamp(Math.floor(vl / ts) - 1, 0, info.cols - 1);
+    const c1 = clamp(Math.ceil (vr / ts),     0, info.cols - 1);
+    const r0 = clamp(Math.floor(vt / ts) - 1, 0, info.rows - 1);
+    const r1 = clamp(Math.ceil (vb / ts),     0, info.rows - 1);
+
+    const visible = new Set();
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const tile = ensureTile(info.level, c, r);
+        const tw = Math.min(ts, info.width  - c * ts);
+        const th = Math.min(ts, info.height - r * ts);
+        tile.style.left   = `${c * ts}px`;
+        tile.style.top    = `${r * ts}px`;
+        tile.style.width  = `${tw}px`;
+        tile.style.height = `${th}px`;
+        visible.add(tileKey(info.level, c, r));
+      }
+    }
+    for (const [key, img] of state.tiles) {
+      if (!visible.has(key)) { img.remove(); state.tiles.delete(key); }
+    }
+
+    if (_overlayDirty) { renderDrills(); _overlayDirty = false; }
+    renderGuides();
+
+    sbZoom.textContent = `Zoom: ${(state.zoom * 100).toFixed(0)}%`;
+  }
+
+  /* ── Component shapes ── */
+  function renderComponentShapes() {
+    for (const [ref, drillSet] of Object.entries(state.assignments)) {
+      if (!drillSet.size) continue;
+      const drills = [...drillSet]
+        .map(id => state.drills.find(d => d.id === id))
+        .filter(Boolean);
+      if (drills.length < 2) continue;
+
+      const isMine = ref === state.selectedRef;
+      const cls    = isMine ? 'mine' : 'other';
+      const maxR   = Math.max(...drills.map(d => d.r));
+
+      let shape;
+      let labelX, labelY, labelAnchor;
+
+      if (drills.length === 2) {
+        const [d1, d2] = drills;
+        const mx    = (d1.x + d2.x) / 2;
+        const my    = (d1.y + d2.y) / 2;
+        const dx    = d2.x - d1.x, dy = d2.y - d1.y;
+        const dist  = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        const rW    = dist + maxR * 1.8;
+        const rH    = maxR * 2.2;
+
+        shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        shape.setAttribute('x',      -rW / 2);
+        shape.setAttribute('y',      -rH / 2);
+        shape.setAttribute('width',   rW);
+        shape.setAttribute('height',  rH);
+        shape.setAttribute('rx',      maxR * 0.35);
+        shape.setAttribute('transform', `translate(${mx},${my}) rotate(${angle})`);
+
+        // Label above the midpoint
+        labelX = mx; labelY = my - maxR * 1.5; labelAnchor = 'middle';
+      } else {
+        const xs  = drills.map(d => d.x), ys = drills.map(d => d.y);
+        const pad = maxR * 1.5;
+        const x   = Math.min(...xs) - pad;
+        const y   = Math.min(...ys) - pad;
+        const w   = Math.max(...xs) - Math.min(...xs) + pad * 2;
+        const h   = Math.max(...ys) - Math.min(...ys) + pad * 2;
+
+        shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        shape.setAttribute('x',      x);
+        shape.setAttribute('y',      y);
+        shape.setAttribute('width',  w);
+        shape.setAttribute('height', h);
+        shape.setAttribute('rx',     4);
+
+        labelX = x + 4; labelY = y - 4; labelAnchor = 'start';
+      }
+
+      shape.classList.add('comp-shape', cls);
+      drillSvg.insertBefore(shape, drillSvg.firstChild);
+
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      lbl.setAttribute('x', labelX);
+      lbl.setAttribute('y', labelY);
+      lbl.setAttribute('text-anchor', labelAnchor);
+      lbl.classList.add('comp-shape-label', cls);
+      lbl.textContent = ref;
+      drillSvg.insertBefore(lbl, drillSvg.firstChild);
+    }
+  }
+
+  /* ── Drill overlay ── */
+  function drillClass(d) {
+    const mine = state.selectedRef && state.assignments[state.selectedRef]?.has(d.id);
+    if (mine) return 'mine';
+    for (const ref of Object.keys(state.assignments)) {
+      if (ref !== state.selectedRef && state.assignments[ref].has(d.id)) return 'other';
+    }
+    return 'unassigned';
+  }
+
+  function renderDrills() {
+    drillSvg.innerHTML = '';
+    renderComponentShapes();   // shapes go behind drill circles
+    for (const d of state.drills) {
+      const cls = drillClass(d);
+
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', d.x);
+      c.setAttribute('cy', d.y);
+      c.setAttribute('r',  d.r);
+      c.classList.add('drill-circle', cls);
+      c.addEventListener('click', (e) => { e.stopPropagation(); toggleDrill(d.id); });
+      drillSvg.appendChild(c);
+
+      // Label for drills assigned to selected component
+      if (cls === 'mine') {
+        const set   = state.assignments[state.selectedRef];
+        const arr   = [...set];
+        const pinNo = arr.indexOf(d.id) + 1;
+        const lbl   = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        lbl.setAttribute('x', d.x + d.r * 0.6);
+        lbl.setAttribute('y', d.y - d.r * 0.6);
+        lbl.classList.add('drill-label');
+        lbl.textContent = pinNo;
+        drillSvg.appendChild(lbl);
+      }
+    }
+    updateStatus();
+  }
+
+  function dirtyDrills() { _overlayDirty = true; render(); }
+
+  /* ── Assignment ── */
+  function toggleDrill(drillId) {
+    if (!state.selectedRef) return;
+    if (!state.assignments[state.selectedRef]) {
+      state.assignments[state.selectedRef] = new Set();
+    }
+    const set = state.assignments[state.selectedRef];
+    if (set.has(drillId)) {
+      set.delete(drillId);
+    } else {
+      set.add(drillId);
+    }
+    dirtyDrills();
+    updateCompItem(state.selectedRef);
+    const selComp = state.components.find(c => c.ref === state.selectedRef);
+    if (selComp) updateAccordionState(selComp.comp_type);
+    btnSave.disabled = false;
+    btnExport.disabled = false;
+  }
+
+  /* ── Status ── */
+  function updateStatus() {
+    const ref = state.selectedRef;
+    if (!ref) {
+      sbSel.textContent = 'Sin componente seleccionado';
+      sbAssigned.textContent = `${Object.keys(state.assignments).length} componentes con pines`;
+      return;
+    }
+    const count = state.assignments[ref]?.size ?? 0;
+    sbSel.textContent      = `Seleccionado: ${ref}`;
+    sbAssigned.textContent = `${count} taladro${count !== 1 ? 's' : ''} asignado${count !== 1 ? 's' : ''}`;
+  }
+
+  /* ── Guide SVG ── */
+  function renderGuides() {
+    const W = viewer.clientWidth, H = viewer.clientHeight;
+    guideSvg.setAttribute('width',  W);
+    guideSvg.setAttribute('height', H);
+    guideSvg.innerHTML = '';
+    if (!state.showCrosshair || state.cursorVX < 0) return;
+    const cx = state.cursorVX, cy = state.cursorVY;
+    const h = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    h.setAttribute('x1', 0); h.setAttribute('y1', cy); h.setAttribute('x2', W); h.setAttribute('y2', cy);
+    h.classList.add('crosshair-line');
+    guideSvg.appendChild(h);
+    const v = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    v.setAttribute('x1', cx); v.setAttribute('y1', 0); v.setAttribute('x2', cx); v.setAttribute('y2', H);
+    v.classList.add('crosshair-line');
+    guideSvg.appendChild(v);
+  }
+
+  /* ── Pointer events ── */
+  let _rDown = false, _rStart = null;
+
+  viewer.addEventListener('pointerdown', (e) => {
+    if (e.button === 2) {
+      _rDown  = true;
+      _rStart = { ox: state.x, oy: state.y, cx: e.clientX, cy: e.clientY };
+      viewer.setPointerCapture(e.pointerId);
+      viewer.classList.add('panning');
+    }
+  });
+
+  viewer.addEventListener('pointermove', (e) => {
+    const vp = toViewer(e.clientX, e.clientY);
+    state.cursorVX = vp.x; state.cursorVY = vp.y;
+    if (_rDown) {
+      state.x = _rStart.ox + (e.clientX - _rStart.cx);
+      state.y = _rStart.oy + (e.clientY - _rStart.cy);
+      render(); return;
+    }
+    const p = clientToImage(e.clientX, e.clientY);
+    sbPos.textContent = `${p.x.toFixed(0)}, ${p.y.toFixed(0)} px`;
+    renderGuides();
+  });
+
+  viewer.addEventListener('pointerup', (e) => {
+    if (e.button === 2) { _rDown = false; viewer.classList.remove('panning'); }
+  });
+
+  viewer.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  viewer.addEventListener('pointerleave', () => {
+    state.cursorVX = -9999; state.cursorVY = -9999; renderGuides();
+  });
+
+  viewer.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    setZoom(state.zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY);
+  }, { passive: false });
+
+  /* ── Component panel ── */
+  const TYPE_ORDER = ['IC','CAP','RES','CON','CON50','DIO','TR','IND','RNET','XTAL','JP','RELAY','OTRO'];
+
+  const accState = {};   // { type: bool } open/closed
+  const accEls   = {};   // { type: { hdr, body } }
+  const itemEls  = {};   // { ref: element }
+
+  function buildPanel(filterQ = '') {
+    const q = filterQ.toLowerCase();
+    panelBody.innerHTML = '';
+
+    const groups = {};
+    for (const c of state.components) {
+      if (q && !c.ref.toLowerCase().includes(q) && !(c.value||c.part||'').toLowerCase().includes(q)) continue;
+      (groups[c.comp_type] = groups[c.comp_type] || []).push(c);
+    }
+
+    if (!Object.keys(groups).length) {
+      panelBody.appendChild(Object.assign(document.createElement('div'), {
+        className: 'panel-empty',
+        textContent: state.components.length ? 'Sin resultados.' : 'Cargá un BOM para ver los componentes.',
+      }));
+      return;
+    }
+
+    const typeOrder = [...TYPE_ORDER, ...Object.keys(groups).filter(t => !TYPE_ORDER.includes(t))];
+
+    for (const type of typeOrder) {
+      const comps = groups[type];
+      if (!comps) continue;
+
+      const grp = document.createElement('div');
+      grp.className = 'acc-group';
+
+      const allDone = comps.every(c => (state.assignments[c.ref]?.size ?? 0) > 0);
+      // All done → always collapse; otherwise use stored state or default open
+      const isOpen = allDone ? false : (accState[type] !== false);
+      accState[type] = isOpen;
+
+      const hdr = document.createElement('button');
+      hdr.className = 'acc-header' + (isOpen ? ' open' : '');
+      hdr.innerHTML = `${type} <span class="acc-count">${comps.length}</span><span class="acc-arrow">▶</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'acc-body' + (isOpen ? ' open' : '');
+
+      accEls[type] = { hdr, body };
+
+      hdr.addEventListener('click', () => {
+        const open = body.classList.toggle('open');
+        hdr.classList.toggle('open', open);
+        accState[type] = open;
+      });
+
+      for (const c of comps) {
+        const item = document.createElement('div');
+        item.className = 'comp-item' + (state.selectedRef === c.ref ? ' selected' : '');
+        item.dataset.ref = c.ref;
+
+        const dot   = document.createElement('span');
+        dot.className = 'comp-dot' + (state.assignments[c.ref]?.size ? ' has-pins' : '');
+
+        const ref   = document.createElement('span');
+        ref.className = 'comp-ref';
+        ref.textContent = c.ref;
+
+        const pins  = document.createElement('span');
+        pins.className = 'comp-pins';
+        const n = state.assignments[c.ref]?.size ?? 0;
+        pins.textContent = n ? `${n}p` : (c.value || c.part || '');
+
+        item.appendChild(dot);
+        item.appendChild(ref);
+        item.appendChild(pins);
+
+        item.addEventListener('click', () => selectComponent(c.ref));
+        body.appendChild(item);
+        itemEls[c.ref] = item;
+      }
+
+      grp.appendChild(hdr);
+      grp.appendChild(body);
+      panelBody.appendChild(grp);
+    }
+  }
+
+  function selectComponent(ref) {
+    state.selectedRef = (state.selectedRef === ref) ? null : ref;
+    panelBody.querySelectorAll('.comp-item').forEach(el => {
+      el.classList.toggle('selected', el.dataset.ref === state.selectedRef);
+    });
+    dirtyDrills();
+
+    if (state.selectedRef) {
+      sbSel.textContent = `Seleccionado: ${state.selectedRef}`;
+    } else {
+      sbSel.textContent = 'Sin componente seleccionado';
+    }
+    updateStatus();
+  }
+
+  function updateAccordionState(type) {
+    const els = accEls[type]; if (!els) return;
+    const comps = state.components.filter(c => c.comp_type === type);
+    const allDone = comps.length > 0 && comps.every(c => (state.assignments[c.ref]?.size ?? 0) > 0);
+    const isOpen = !allDone;
+    els.hdr.classList.toggle('open', isOpen);
+    els.body.classList.toggle('open', isOpen);
+    accState[type] = isOpen;
+  }
+
+  function updateCompItem(ref) {
+    const item = itemEls[ref]; if (!item) return;
+    const n = state.assignments[ref]?.size ?? 0;
+    const c = state.components.find(x => x.ref === ref);
+    item.querySelector('.comp-pins').textContent = n ? `${n}p` : (c?.value || c?.part || '');
+    const dot = item.querySelector('.comp-dot');
+    dot.classList.toggle('has-pins', n > 0);
+  }
+
+  compSearch.addEventListener('input', () => buildPanel(compSearch.value.trim()));
+
+  /* ── Load BOM ── */
+  function loadBOM(data) {
+    const arr = data.components ?? data;
+    if (!Array.isArray(arr)) { alert('bom.json inválido'); return; }
+    state.components = arr;
+    // init assignments
+    for (const c of state.components) {
+      if (!state.assignments[c.ref]) state.assignments[c.ref] = new Set();
+    }
+    buildPanel();
+    panelEmpty.hidden = true;
+  }
+
+  document.getElementById('btn-load-bom').addEventListener('click', () => {
+    document.getElementById('file-bom').click();
+  });
+  document.getElementById('file-bom').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    f.text().then(t => { try { loadBOM(JSON.parse(t)); } catch { alert('JSON inválido'); } });
+    e.target.value = '';
+  });
+
+  /* ── Load Drills ── */
+  function loadDrills(data) {
+    const arr = data.drills ?? data;
+    if (!Array.isArray(arr)) { alert('drills.json inválido'); return; }
+    state.drills = arr;
+    dirtyDrills();
+  }
+
+  document.getElementById('btn-load-drills').addEventListener('click', () => {
+    document.getElementById('file-drills').click();
+  });
+  document.getElementById('file-drills').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    f.text().then(t => { try { loadDrills(JSON.parse(t)); } catch { alert('JSON inválido'); } });
+    e.target.value = '';
+  });
+
+  /* ── Serialize ── */
+  function buildData() {
+    const components = state.components.map(c => ({
+      ...c,
+      drills: [...(state.assignments[c.ref] || [])],
+    }));
+    return { components };
+  }
+
+  /* ── Save (PUT) ── */
+  async function doSave() {
+    try {
+      const res = await fetch('data/components.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildData(), null, 2),
+      });
+      if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+      const orig = btnSave.textContent;
+      btnSave.textContent = '✓ Guardado';
+      setTimeout(() => { btnSave.textContent = orig; }, 1800);
+    } catch (err) {
+      alert(`Error al guardar: ${err.message}\n¿Está corriendo scripts/dev_server.py?`);
+    }
+  }
+
+  btnSave.addEventListener('click', doSave);
+
+  /* ── Export ── */
+  btnExport.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(buildData(), null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'components.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'f' || e.key === 'F') fitToScreen();
+    if (e.key === 'c' || e.key === 'C') { state.showCrosshair = !state.showCrosshair; renderGuides(); }
+    if (e.key === 'Escape') { state.selectedRef = null; selectComponent(null); }
+  });
+
+  /* ── Layer select ── */
+  layerSel.addEventListener('change', () => {
+    state.boardId = layerSel.value;
+    clearTiles();
+    fitToScreen();
+  });
+
+  /* ── Manifest load ── */
+  async function init() {
+    // Try to auto-load tiles manifest
+    try {
+      const res = await fetch('tiles/manifest.json');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.manifest = await res.json();
+      const boards = Object.keys(state.manifest.boards);
+      if (!boards.length) throw new Error('Sin capas en manifest');
+      layerSel.innerHTML = boards.map(id => `<option value="${id}">${id}</option>`).join('');
+      state.boardId = boards[0];
+      placeholder.style.display = 'none';
+      fitToScreen();
+    } catch (err) {
+      placeholder.innerHTML = `<span style="color:var(--red)">Sin tiles: ${err.message}</span><span>Generá los tiles primero con generate_tiles.py</span>`;
+    }
+
+    // Cargas en secuencia para evitar race conditions:
+    // 1. BOM → state.components  2. Drills → state.drills  3. Components → assignments
+    const bomData = await fetch('data/bom.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    if (bomData) loadBOM(bomData);
+
+    const drillsData = await fetch('data/drills.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    if (drillsData) loadDrills(drillsData);
+
+    const compData = await fetch('data/components.json').then(r => r.ok ? r.json() : null).catch(() => null);
+    if (compData?.components) {
+      for (const c of compData.components) {
+        if (c.drills?.length) {
+          // soporta formato viejo [{id,x,y,r}] y nuevo [id]
+          state.assignments[c.ref] = new Set(c.drills.map(x => typeof x === 'object' ? x.id : x));
+        }
+      }
+      buildPanel();
+      btnSave.disabled = false;
+      btnExport.disabled = false;
+      dirtyDrills();
+    }
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>

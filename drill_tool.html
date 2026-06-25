@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drills — PCB Reverser</title>
+  <link rel="stylesheet" href="src/tools.css">
+  <style>
+    :root { --radius: 8px; }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--amber);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    .sep { flex: 1; }
+
+    button { font-weight: 600; }
+
+    .tool-btn { font-size: 13px; }
+    .tool-btn.active {
+      background: #ffb83022;
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+    .tool-btn.erase.active {
+      background: #ff4e4e22;
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    .radius-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .radius-wrap input[type="number"] {
+      width: 58px;
+      height: 30px;
+      padding: 0 6px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    /* ── BODY ────────────────────────────────────────── */
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      overflow: hidden;
+    }
+
+    /* ── VIEWER ──────────────────────────────────────── */
+    #viewer {
+      position: relative;
+      overflow: hidden;
+      background: #080b0d;
+      cursor: crosshair;
+    }
+    #viewer.panning { cursor: grabbing; }
+    #viewer.erase-mode { cursor: cell; }
+
+    #world, #world-b {
+      position: absolute;
+      transform-origin: 0 0;
+    }
+
+    #world img, #world-b img {
+      position: absolute;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    #world-b { opacity: 0.5; }
+
+    #drill-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    /* Guide SVG sits on top of drill-svg, viewport coordinates */
+    #guide-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .crosshair-line {
+      stroke: rgba(255,255,255,0.45);
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+    }
+
+    .grid-line {
+      stroke: rgba(255,184,48,0.18);
+      stroke-width: 1;
+    }
+
+    #overlay-controls {
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    #overlay-controls.visible { display: flex; }
+    #overlay-controls label { font-size: 12px; color: var(--muted); }
+
+    #overlay-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 140px; height: 4px;
+      background: linear-gradient(to right, #29d28f var(--pct,50%), #ff4e4e var(--pct,50%));
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    #overlay-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 0 2px var(--border);
+      cursor: pointer;
+    }
+
+    .drill-circle {
+      fill: none;
+      stroke: var(--amber);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: all;
+      cursor: pointer;
+      transition: stroke .1s;
+    }
+    .drill-circle:hover { stroke: #fff; }
+    .drill-circle.selected { stroke: var(--red); stroke-width: 3; }
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────── */
+    aside {
+      border-left: 1px solid var(--border);
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    aside h2 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 3px 0;
+    }
+    .stat-row strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    kbd {
+      font-size: 10px;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    /* ── STATUS BAR ──────────────────────────────────── */
+    .statusbar {
+      flex: none;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+    }
+    .statusbar span + span::before { content: "·"; margin-right: 16px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Drills</h1>
+
+  <select id="layer-select" title="Capa a mostrar"></select>
+
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+
+  <button class="tool-btn active" id="btn-add"   title="Agregar taladro (A)">+ Agregar</button>
+  <button class="tool-btn erase" id="btn-erase" title="Borrar taladro (E)">✕ Borrar</button>
+
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+
+  <div class="radius-wrap">
+    <label for="radius-input">Radio (px):</label>
+    <input type="number" id="radius-input" min="1" max="999" step="0.5" value="10">
+  </div>
+
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+
+  <button class="tool-btn active" id="btn-crosshair" title="Crosshair (C)">⊕ Crosshair</button>
+  <button class="tool-btn"        id="btn-grid"      title="Grilla (G)">⊞ Grid</button>
+  <button class="tool-btn"        id="btn-overlay"   title="Overlay A+B (O)">⊙ Overlay</button>
+
+  <div id="overlay-controls">
+    <label>A</label>
+    <input type="range" id="overlay-slider" min="0" max="100" value="50">
+    <label>B</label>
+  </div>
+
+  <div class="sep"></div>
+
+  <button id="btn-import">Importar JSON</button>
+  <button id="btn-export" disabled>Exportar JSON</button>
+</header>
+
+<div class="body">
+
+  <div id="viewer">
+    <div id="world"></div>
+    <div id="world-b" hidden></div>
+    <svg id="drill-svg"></svg>
+    <svg id="guide-svg"></svg>
+    <div class="placeholder" id="placeholder">Cargando manifest…</div>
+  </div>
+
+  <aside>
+    <div>
+      <h2>Estadísticas</h2>
+      <div class="stat-row"><span>Taladros</span><strong id="stat-count">0</strong></div>
+      <div class="stat-row"><span>Radio actual</span><strong id="stat-radius">10 px</strong></div>
+      <div class="stat-row"><span>Escala</span><strong id="stat-scale">—</strong></div>
+      <div class="stat-row"><span>Zoom</span><strong id="stat-zoom">—</strong></div>
+    </div>
+
+    <div>
+      <h2>Atajos</h2>
+      <p class="hint">
+        <kbd>A</kbd> modo agregar<br>
+        <kbd>E</kbd> modo borrar<br>
+        <kbd>Del</kbd> borrar seleccionado<br>
+        <kbd>Scroll</kbd> zoom<br>
+        <kbd>Clic derecho</kbd> arrastrar<br>
+        <kbd>F</kbd> ajustar pantalla<br>
+        <kbd>C</kbd> toggle crosshair<br>
+        <kbd>G</kbd> toggle grid<br>
+        <kbd>O</kbd> toggle overlay<br>
+        <kbd>Ctrl Z</kbd> deshacer
+      </p>
+    </div>
+
+    <div>
+      <h2>Instrucciones</h2>
+      <p class="hint">
+        1. Seleccioná la capa a revisar.<br>
+        2. Ajustá el radio en px.<br>
+        3. Hacé clic sobre cada taladro.<br>
+        4. Exportá el JSON cuando termines.
+      </p>
+    </div>
+  </aside>
+
+</div>
+
+<div class="statusbar">
+  <span id="sb-zoom">Zoom: —</span>
+  <span id="sb-pos">—</span>
+  <span id="sb-count">0 taladros</span>
+</div>
+
+<script>
+  /* ── State ─────────────────────────────────────────────── */
+  const state = {
+    manifest:   null,
+    boardId:    null,
+    x: 0, y: 0,
+    zoom: 1,
+    level: 0,
+    tiles:      new Map(),
+    drills:     [],          // [{id, x, y, r}] — coordenadas compartidas entre capas
+    nextId:     1,
+    selectedId: null,
+    mode:       "add",       // "add" | "erase"
+    history:    [],          // undo stack (snapshots of drills[])
+    dragging:   false,
+    dragMoved:  false,
+    dragStart:  null,
+    showCrosshair: true,
+    showGrid:      false,
+    overlayMode:   false,
+    boardIdB:      null,   // el "otro" board para overlay
+    tilesB:        new Map(),
+    cursorVX:   -9999,   // cursor in viewport px
+    cursorVY:   -9999,
+  };
+
+  /* ── DOM ────────────────────────────────────────────────── */
+  const viewer      = document.getElementById("viewer");
+  const world       = document.getElementById("world");
+  const worldB        = document.getElementById("world-b");
+  const drillSvg      = document.getElementById("drill-svg");
+  const guideSvg      = document.getElementById("guide-svg");
+  const btnOverlay    = document.getElementById("btn-overlay");
+  const overlayCtrl   = document.getElementById("overlay-controls");
+  const overlaySlider = document.getElementById("overlay-slider");
+  const btnCrosshair= document.getElementById("btn-crosshair");
+  const btnGrid     = document.getElementById("btn-grid");
+  const placeholder = document.getElementById("placeholder");
+  const layerSel    = document.getElementById("layer-select");
+  const radiusInput = document.getElementById("radius-input");
+  const btnAdd      = document.getElementById("btn-add");
+  const btnErase    = document.getElementById("btn-erase");
+  const btnImport   = document.getElementById("btn-import");
+  const btnExport   = document.getElementById("btn-export");
+  const statCount   = document.getElementById("stat-count");
+  const statRadius  = document.getElementById("stat-radius");
+  const statScale   = document.getElementById("stat-scale");
+  const statZoom    = document.getElementById("stat-zoom");
+  const sbZoom      = document.getElementById("sb-zoom");
+  const sbPos       = document.getElementById("sb-pos");
+  const sbCount     = document.getElementById("sb-count");
+
+  let _rafId = null;
+  let _overlayDirty = true;
+
+  /* ── Helpers ────────────────────────────────────────────── */
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function board() { return state.manifest?.boards?.[state.boardId]; }
+  function levelInfo() { return board()?.levels?.[state.level]; }
+
+  function toViewer(cx, cy) {
+    const r = viewer.getBoundingClientRect();
+    return { x: cx - r.left, y: cy - r.top };
+  }
+  function clientToImage(cx, cy) {
+    const v = toViewer(cx, cy);
+    return { x: (v.x - state.x) / state.zoom, y: (v.y - state.y) / state.zoom };
+  }
+
+  function currentRadius() { return Math.max(1, parseFloat(radiusInput.value) || 10); }
+
+  function pxPerMm() { return state.manifest?.px_per_mm ?? null; }
+
+  /* ── Zoom / pan ─────────────────────────────────────────── */
+  function chooseLevel() {
+    const b = board();
+    if (!b) return;
+    let best = b.levels[0], bestScore = Infinity;
+    for (const lv of b.levels) {
+      const score = Math.abs(Math.log2(state.zoom / lv.scale));
+      if (score < bestScore) { best = lv; bestScore = score; }
+    }
+    state.level = best.level;
+  }
+
+  function setZoom(next, anchorCX, anchorCY) {
+    const b = board();
+    if (!b) return;
+    const min = Math.min(viewer.clientWidth / b.width, viewer.clientHeight / b.height) * 0.8;
+    const z = clamp(next, min, 8);
+    const ax = anchorCX !== undefined ? toViewer(anchorCX, 0).x : viewer.clientWidth  / 2;
+    const ay = anchorCY !== undefined ? toViewer(0, anchorCY).y : viewer.clientHeight / 2;
+    const ix = (ax - state.x) / state.zoom;
+    const iy = (ay - state.y) / state.zoom;
+    state.x = ax - ix * z;
+    state.y = ay - iy * z;
+    state.zoom = z;
+    render();
+  }
+
+  function fitToScreen() {
+    const b = board();
+    if (!b) return;
+    state.zoom = Math.min(viewer.clientWidth / b.width, viewer.clientHeight / b.height) * 0.92;
+    state.x = (viewer.clientWidth  - b.width  * state.zoom) / 2;
+    state.y = (viewer.clientHeight - b.height * state.zoom) / 2;
+    render();
+  }
+
+  /* ── Tiles ──────────────────────────────────────────────── */
+  function tileKey(level, col, row) { return `${level}/${col}/${row}`; }
+
+  function ensureTile(level, col, row) {
+    const key = tileKey(level, col, row);
+    if (state.tiles.has(key)) return state.tiles.get(key);
+    const img = document.createElement("img");
+    img.src = `tiles/${state.boardId}/${level}/${col}_${row}.jpg`;
+    img.style.position = "absolute";
+    img.style.imageRendering = "pixelated";
+    img.style.display = "block";
+    world.appendChild(img);
+    state.tiles.set(key, img);
+    return img;
+  }
+
+  function ensureTileB(level, col, row) {
+    const key = tileKey(level, col, row);
+    if (state.tilesB.has(key)) return state.tilesB.get(key);
+    const img = document.createElement("img");
+    img.src = `tiles/${state.boardIdB}/${level}/${col}_${row}.jpg`;
+    img.style.position = "absolute";
+    img.style.imageRendering = "pixelated";
+    img.style.display = "block";
+    worldB.appendChild(img);
+    state.tilesB.set(key, img);
+    return img;
+  }
+
+  function clearTiles() {
+    state.tiles.clear();
+    world.replaceChildren();
+    state.tilesB.clear();
+    worldB.replaceChildren();
+  }
+
+  /* ── Render ─────────────────────────────────────────────── */
+  function render() {
+    if (_rafId !== null) return;
+    _rafId = requestAnimationFrame(() => { _rafId = null; doRender(); });
+  }
+
+  function doRender() {
+    const b = board();
+    if (!b) return;
+
+    chooseLevel();
+    const info = levelInfo();
+    const ts = state.manifest.tileSize;
+    const lts = state.zoom / info.scale;
+
+    world.style.width     = `${info.width}px`;
+    world.style.height    = `${info.height}px`;
+    world.style.transform = `translate(${state.x}px,${state.y}px) scale(${lts})`;
+
+    worldB.hidden = !state.overlayMode;
+    if (state.overlayMode && state.boardIdB) {
+      worldB.style.width     = `${info.width}px`;
+      worldB.style.height    = `${info.height}px`;
+      worldB.style.transform = world.style.transform;
+    }
+
+    // SVG overlay viewBox in image-space coords
+    const vbX = (-state.x / state.zoom).toFixed(2);
+    const vbY = (-state.y / state.zoom).toFixed(2);
+    const vbW = (viewer.clientWidth  / state.zoom).toFixed(2);
+    const vbH = (viewer.clientHeight / state.zoom).toFixed(2);
+    drillSvg.setAttribute("width",   viewer.clientWidth);
+    drillSvg.setAttribute("height",  viewer.clientHeight);
+    drillSvg.setAttribute("viewBox", `${vbX} ${vbY} ${vbW} ${vbH}`);
+
+    // Visible tile range
+    const vl = Math.max(0, (-state.x / state.zoom) * info.scale);
+    const vt = Math.max(0, (-state.y / state.zoom) * info.scale);
+    const vr = Math.min(info.width,  ((viewer.clientWidth  - state.x) / state.zoom) * info.scale);
+    const vb = Math.min(info.height, ((viewer.clientHeight - state.y) / state.zoom) * info.scale);
+    const c0 = clamp(Math.floor(vl / ts) - 1, 0, info.cols - 1);
+    const c1 = clamp(Math.ceil (vr / ts),     0, info.cols - 1);
+    const r0 = clamp(Math.floor(vt / ts) - 1, 0, info.rows - 1);
+    const r1 = clamp(Math.ceil (vb / ts),     0, info.rows - 1);
+
+    const visible = new Set();
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const tile = ensureTile(info.level, c, r);
+        const tw = Math.min(ts, info.width  - c * ts);
+        const th = Math.min(ts, info.height - r * ts);
+        tile.style.left   = `${c * ts}px`;
+        tile.style.top    = `${r * ts}px`;
+        tile.style.width  = `${tw}px`;
+        tile.style.height = `${th}px`;
+        if (state.overlayMode && state.boardIdB) {
+          const tileB = ensureTileB(info.level, c, r);
+          tileB.style.left   = `${c * ts}px`;
+          tileB.style.top    = `${r * ts}px`;
+          tileB.style.width  = `${tw}px`;
+          tileB.style.height = `${th}px`;
+        }
+        visible.add(tileKey(info.level, c, r));
+      }
+    }
+    for (const [key, img] of state.tiles)  { if (!visible.has(key)) { img.remove(); state.tiles.delete(key); } }
+    for (const [key, img] of state.tilesB) { if (!visible.has(key)) { img.remove(); state.tilesB.delete(key); } }
+
+    if (_overlayDirty) { renderOverlay(); _overlayDirty = false; }
+
+    renderGuides();
+
+    // Statusbar
+    sbZoom.textContent  = `Zoom: ${(state.zoom * 100).toFixed(0)}%`;
+    statZoom.textContent = `${(state.zoom * 100).toFixed(0)}%`;
+  }
+
+  /* ── Drill overlay ──────────────────────────────────────── */
+  function renderOverlay() {
+    drillSvg.innerHTML = "";
+    for (const d of state.drills) {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", d.x);
+      c.setAttribute("cy", d.y);
+      c.setAttribute("r",  d.r);
+      c.classList.add("drill-circle");
+      if (d.id === state.selectedId) c.classList.add("selected");
+      c.addEventListener("click",      (e) => { e.stopPropagation(); onDrillClick(d.id); });
+      c.addEventListener("contextmenu",(e) => { e.preventDefault(); removeDrill(d.id); });
+      drillSvg.appendChild(c);
+    }
+    updateStats();
+  }
+
+  function dirtyOverlay() { _overlayDirty = true; render(); }
+
+  /* ── Drill data ─────────────────────────────────────────── */
+  function snapshot() { state.history.push(state.drills.map(d => ({...d}))); if (state.history.length > 50) state.history.shift(); }
+
+  function addDrill(x, y) {
+    snapshot();
+    state.drills.push({ id: state.nextId++, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, r: currentRadius() });
+    state.selectedId = state.drills[state.drills.length - 1].id;
+    dirtyOverlay();
+    btnExport.disabled = false;
+  }
+
+  function removeDrill(id) {
+    snapshot();
+    state.drills = state.drills.filter(d => d.id !== id);
+    if (state.selectedId === id) state.selectedId = null;
+    dirtyOverlay();
+    btnExport.disabled = state.drills.length === 0;
+  }
+
+  function onDrillClick(id) {
+    if (state.mode === "erase") { removeDrill(id); return; }
+    state.selectedId = (state.selectedId === id) ? null : id;
+    dirtyOverlay();
+  }
+
+  function nearestDrill(x, y) {
+    let best = null, bestD = Infinity;
+    for (const d of state.drills) {
+      const dx = d.x - x, dy = d.y - y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < d.r * 1.5 && dist < bestD) { best = d; bestD = dist; }
+    }
+    return best;
+  }
+
+  function undo() {
+    if (!state.history.length) return;
+    state.drills = state.history.pop();
+    state.selectedId = null;
+    dirtyOverlay();
+    btnExport.disabled = state.drills.length === 0;
+  }
+
+  function updateStats() {
+    statCount.textContent = state.drills.length;
+    sbCount.textContent   = `${state.drills.length} taladro${state.drills.length !== 1 ? "s" : ""}`;
+    const scale = pxPerMm();
+    if (scale) {
+      const r = currentRadius();
+      statRadius.textContent = `${r} px / ${(r / scale).toFixed(2)} mm`;
+      statScale.textContent  = `${scale.toFixed(3)} px/mm`;
+    } else {
+      statRadius.textContent = `${currentRadius()} px`;
+      statScale.textContent  = "—";
+    }
+  }
+
+  /* ── Guide SVG (viewport-space, no viewBox needed) ─────── */
+  function renderGuides() {
+    const W = viewer.clientWidth;
+    const H = viewer.clientHeight;
+    guideSvg.setAttribute("width",  W);
+    guideSvg.setAttribute("height", H);
+    guideSvg.innerHTML = "";
+
+    // Grid
+    if (state.showGrid && state.manifest) {
+      const pitchPx = state.manifest.grid_pitch_px
+                   ?? (pxPerMm() ? pxPerMm() * 2.54 : null);
+      if (pitchPx && pitchPx > 0) {
+        const screenPitch = pitchPx * state.zoom;
+        if (screenPitch >= 4) {   // don't draw if too dense
+          // Offset: find first grid line visible
+          const originX = (state.manifest.grid_origin_x ?? 0) * state.zoom + state.x;
+          const originY = (state.manifest.grid_origin_y ?? 0) * state.zoom + state.y;
+          const startX  = originX % screenPitch;
+          const startY  = originY % screenPitch;
+          for (let x = startX; x <= W; x += screenPitch) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x.toFixed(1)); line.setAttribute("y1", 0);
+            line.setAttribute("x2", x.toFixed(1)); line.setAttribute("y2", H);
+            line.classList.add("grid-line");
+            guideSvg.appendChild(line);
+          }
+          for (let y = startY; y <= H; y += screenPitch) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", 0);  line.setAttribute("y1", y.toFixed(1));
+            line.setAttribute("x2", W);  line.setAttribute("y2", y.toFixed(1));
+            line.classList.add("grid-line");
+            guideSvg.appendChild(line);
+          }
+        }
+      }
+    }
+
+    // Crosshair
+    if (state.showCrosshair && state.cursorVX >= 0) {
+      const cx = state.cursorVX, cy = state.cursorVY;
+      const hLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      hLine.setAttribute("x1", 0); hLine.setAttribute("y1", cy.toFixed(1));
+      hLine.setAttribute("x2", W); hLine.setAttribute("y2", cy.toFixed(1));
+      hLine.classList.add("crosshair-line");
+      guideSvg.appendChild(hLine);
+
+      const vLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      vLine.setAttribute("x1", cx.toFixed(1)); vLine.setAttribute("y1", 0);
+      vLine.setAttribute("x2", cx.toFixed(1)); vLine.setAttribute("y2", H);
+      vLine.classList.add("crosshair-line");
+      guideSvg.appendChild(vLine);
+    }
+  }
+
+  /* ── Mode buttons ───────────────────────────────────────── */
+  function setMode(m) {
+    state.mode = m;
+    btnAdd.classList.toggle("active", m === "add");
+    btnErase.classList.toggle("active", m === "erase");
+    viewer.classList.toggle("erase-mode", m === "erase");
+  }
+  btnAdd.addEventListener("click",   () => setMode("add"));
+  btnErase.addEventListener("click", () => setMode("erase"));
+
+  btnOverlay.addEventListener("click", () => {
+    state.overlayMode = !state.overlayMode;
+    btnOverlay.classList.toggle("active", state.overlayMode);
+    overlayCtrl.classList.toggle("visible", state.overlayMode);
+    if (!state.overlayMode) {
+      state.tilesB.clear();
+      worldB.replaceChildren();
+    }
+    render();
+  });
+
+  overlaySlider.addEventListener("input", () => {
+    const v = Number(overlaySlider.value);
+    overlaySlider.style.setProperty("--pct", `${100 - v}%`);
+    worldB.style.opacity = v / 100;
+  });
+  // init slider gradient
+  overlaySlider.style.setProperty("--pct", "50%");
+
+  btnCrosshair.addEventListener("click", () => {
+    state.showCrosshair = !state.showCrosshair;
+    btnCrosshair.classList.toggle("active", state.showCrosshair);
+    renderGuides();
+  });
+  btnGrid.addEventListener("click", () => {
+    state.showGrid = !state.showGrid;
+    btnGrid.classList.toggle("active", state.showGrid);
+    renderGuides();
+  });
+
+  radiusInput.addEventListener("input", updateStats);
+
+  /* ── Layer select ───────────────────────────────────────── */
+  layerSel.addEventListener("change", () => {
+    state.boardId  = layerSel.value;
+    const boards   = Object.keys(state.manifest.boards);
+    state.boardIdB = boards.find(id => id !== state.boardId) ?? null;
+    btnOverlay.disabled = !state.boardIdB;
+    clearTiles();
+    fitToScreen();
+  });
+
+  /* ── Pointer events ─────────────────────────────────────── */
+  const DRAG_THRESH = 6;
+
+  // left-click state
+  let _lDown = false, _lMoved = false, _lStart = null;
+  // right-click pan state
+  let _rDown = false, _rStart = null;
+
+  viewer.addEventListener("pointerdown", (e) => {
+    if (e.button === 0) {
+      _lDown  = true;
+      _lMoved = false;
+      _lStart = { x: e.clientX, y: e.clientY };
+      viewer.setPointerCapture(e.pointerId);
+    } else if (e.button === 2) {
+      _rDown  = true;
+      _rStart = { ox: state.x, oy: state.y, cx: e.clientX, cy: e.clientY };
+      viewer.setPointerCapture(e.pointerId);
+      viewer.classList.add("panning");
+    }
+  });
+
+  viewer.addEventListener("pointermove", (e) => {
+    const vp = toViewer(e.clientX, e.clientY);
+    state.cursorVX = vp.x;
+    state.cursorVY = vp.y;
+
+    if (_rDown) {
+      state.x = _rStart.ox + (e.clientX - _rStart.cx);
+      state.y = _rStart.oy + (e.clientY - _rStart.cy);
+      render();
+      return;
+    }
+
+    if (_lDown && _lStart) {
+      const dx = e.clientX - _lStart.x, dy = e.clientY - _lStart.y;
+      if (!_lMoved && Math.sqrt(dx*dx + dy*dy) > DRAG_THRESH) _lMoved = true;
+    }
+
+    const p = clientToImage(e.clientX, e.clientY);
+    sbPos.textContent = `${p.x.toFixed(0)}, ${p.y.toFixed(0)} px`;
+    renderGuides();
+  });
+
+  viewer.addEventListener("pointerup", (e) => {
+    if (e.button === 2) {
+      _rDown = false;
+      viewer.classList.remove("panning");
+      return;
+    }
+    if (e.button === 0 && _lDown) {
+      _lDown = false;
+      if (!_lMoved) {
+        const p = clientToImage(e.clientX, e.clientY);
+        if (state.mode === "erase") {
+          const d = nearestDrill(p.x, p.y);
+          if (d) removeDrill(d.id);
+        } else {
+          addDrill(p.x, p.y);
+        }
+      }
+    }
+  });
+
+  viewer.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  viewer.addEventListener("pointerleave", () => {
+    state.cursorVX = -9999;
+    state.cursorVY = -9999;
+    renderGuides();
+  });
+
+  viewer.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    setZoom(state.zoom * factor, e.clientX, e.clientY);
+  }, { passive: false });
+
+  // Pinch-to-zoom
+  let _pinch = null;
+  viewer.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      _pinch = { dist: Math.sqrt(dx*dx + dy*dy), zoom: state.zoom };
+    }
+  }, { passive: true });
+  viewer.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2 && _pinch) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      setZoom(_pinch.zoom * (dist / _pinch.dist));
+    }
+  }, { passive: true });
+  viewer.addEventListener("touchend", () => { _pinch = null; }, { passive: true });
+
+  /* ── Keyboard ───────────────────────────────────────────── */
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "a" || e.key === "A") setMode("add");
+    if (e.key === "e" || e.key === "E") setMode("erase");
+    if (e.key === "f" || e.key === "F") fitToScreen();
+    if (e.key === "c" || e.key === "C") btnCrosshair.click();
+    if (e.key === "g" || e.key === "G") btnGrid.click();
+    if (e.key === "o" || e.key === "O") btnOverlay.click();
+    if (e.key === "Delete" || e.key === "Backspace") {
+      if (state.selectedId !== null) removeDrill(state.selectedId);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); }
+  });
+
+  /* ── Export / Import ────────────────────────────────────── */
+  btnExport.addEventListener("click", () => {
+    const payload = {
+      px_per_mm: pxPerMm(),
+      drills:    state.drills.map(({ id, x, y, r }) => ({ id, x, y, r })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "drills.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  btnImport.addEventListener("click", async () => {
+    try {
+      const [fh] = await window.showOpenFilePicker({
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      });
+      const file = await fh.getFile();
+      const data = JSON.parse(await file.text());
+      snapshot();
+      const arr = Array.isArray(data) ? data : (data.drills ?? []);
+      state.drills     = arr.map(d => ({ ...d, id: state.nextId++ }));
+      state.selectedId = null;
+      dirtyOverlay();
+      btnExport.disabled = state.drills.length === 0;
+    } catch (err) {
+      if (err.name !== "AbortError") console.error(err);
+    }
+  });
+
+  /* ── Manifest load ──────────────────────────────────────── */
+  async function loadManifest() {
+    try {
+      const res = await fetch("tiles/manifest.json");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.manifest = await res.json();
+
+      const boards = Object.keys(state.manifest.boards);
+      if (!boards.length) throw new Error("Sin capas en manifest");
+
+      layerSel.innerHTML = boards.map(id => `<option value="${id}">${id}</option>`).join("");
+      state.boardId  = boards[0];
+      state.boardIdB = boards[1] ?? null;
+      btnOverlay.disabled = !state.boardIdB;
+      placeholder.style.display = "none";
+      fitToScreen();
+    } catch (err) {
+      placeholder.innerHTML = `<span style="color:var(--red)">Error: ${err.message}</span><span>Generá los tiles primero con generate_tiles.py</span>`;
+    }
+  }
+
+  loadManifest();
+</script>
+
+</body>
+</html>
