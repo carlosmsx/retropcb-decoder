@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <link rel="stylesheet" href="src/tools.css">
     <script src="src/i18n.js"></script>
+    <script src="src/nav.js" defer></script>
     <style>
       /* ── BOM page layout ── */
       .bom-page {
@@ -221,15 +222,7 @@
       }
     </style>
   </head>
-  <body>
-    <header class="site-header">
-      <a class="brand" href="index.html" aria-label="Ir al inicio" id="nav-brand">
-        <span id="nav-project-name">RetroPCB Decoder</span>
-      </a>
-      <nav>
-        <a href="viewer.html">Viewer</a>
-      </nav>
-    </header>
+  <body class="scrollable" data-tool="BOM">
 
     <main class="bom-page">
       <div class="bom-head">

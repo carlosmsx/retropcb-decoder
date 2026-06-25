@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pistas — RetroPCB Decoder</title>
   <link rel="stylesheet" href="src/tools.css">
+  <script src="src/nav.js" defer></script>
   <style>
     /* trace_editor-specific overrides */
     header h1 { color: var(--col-a); margin-right: 4px; }
@@ -98,7 +99,7 @@
 
   </style>
 </head>
-<body>
+<body data-tool="Trace Editor">
 
 <header>
   <h1>Pistas</h1>
@@ -1037,7 +1038,7 @@
 
   /* ── Layer select ── */
   layerSel.addEventListener('change', () => {
-    state.boardId = layerSel.value; clearTiles(); fitToScreen();
+    state.boardId = layerSel.value; clearTiles(); render();
   });
 
   /* ── Import / Export ── */

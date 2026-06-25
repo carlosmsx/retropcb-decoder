@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <script src="src/i18n.js"></script>
     <link rel="stylesheet" href="src/tools.css">
+    <script src="src/nav.js" defer></script>
     <style>
       /* ── Nav superior fijo (estilo site-header) ── */
       .viewer-nav {
@@ -814,7 +815,7 @@
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   </head>
-  <body>
+  <body data-tool="Viewer">
     <div class="viewer" id="viewer" aria-label="Navegador de motherboard por tiles">
       <div class="world" id="world">
         <div class="layer" id="layer-a"></div>
@@ -830,10 +831,6 @@
     <div class="pin-tooltip" id="pin-tooltip" aria-hidden="true"></div>
     <!-- ── Nav superior ── -->
     <header class="viewer-nav">
-      <a class="brand" href="index.html" aria-label="Ir al inicio" id="nav-brand">
-        <span id="nav-project-name">RetroPCB Decoder</span>
-      </a>
-      <span class="toolbar-sep"></span>
       <button id="zoom-out" type="button" aria-label="Alejar"  title="Alejar"><i class="ti ti-zoom-out"></i></button>
       <button id="zoom-in"  type="button" aria-label="Acercar" title="Acercar"><i class="ti ti-zoom-in"></i></button>
       <button id="fit"      type="button" data-i18n-title="tb.fit.title" title="Ajustar vista"><i class="ti ti-focus-centered"></i></button>
@@ -850,9 +847,6 @@
         <!-- options populated from project.json -->
       </select>
       <span class="readout" id="readout">Cargando tiles...</span>
-      <nav class="viewer-nav-links">
-        <a href="bom.html">BOM</a>
-      </nav>
     </header>
 
     <!-- ── Toolbar de capas ── -->
@@ -1025,6 +1019,7 @@
         componentsData: null,
 
         // ── Modelo de grafo ──────────────────────────────────────────
+        drills:         [],          // [{id, x, y, r}] desde drills.json — fallback para vias
         graphPoints:    new Map(),   // id → Point  { id, x, y, layer, kind, ... }
         graphSegments:  [],          // Segment[]   { id, from, to, layer, width, net_id }
         netBySegment:   new Map(),   // segId → netId
@@ -2136,24 +2131,36 @@
 
       function renderDrillOverlay() {
         drillOverlay.replaceChildren();
-        const shouldHide = !state.componentsData || !drillLayersEnabled();
-        drillOverlay.style.display = shouldHide ? "none" : "block";
-        if (shouldHide) return;
+        if (!drillLayersEnabled()) { drillOverlay.style.display = "none"; return; }
+        drillOverlay.style.display = "block";
 
-        const components = state.componentsData.components || [];
+        const components = state.componentsData?.components || [];
 
         if (state.showVias) {
           const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          for (const [, pt] of state.graphPoints) {
-            if (pt.layer !== "AB" || pt.comp_id) continue;  // solo vias puras
-            const r = pt.r || 10;
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            circle.setAttribute("cx", pt.x.toFixed(2));
-            circle.setAttribute("cy", pt.y.toFixed(2));
-            circle.setAttribute("r",  r.toFixed(2));
-            circle.setAttribute("class", "drill-via");
-            circle.dataset.status = `Vía ${pt.id}  x:${pt.x.toFixed(1)} y:${pt.y.toFixed(1)}`;
-            group.append(circle);
+          // Preferir graphPoints (grafo completo); fallback a drills.json si no hay grafo
+          if (state.graphPoints.size > 0) {
+            for (const [, pt] of state.graphPoints) {
+              if (pt.layer !== "AB" || pt.comp_id) continue;
+              const r = pt.r || 10;
+              const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              circle.setAttribute("cx", pt.x.toFixed(2));
+              circle.setAttribute("cy", pt.y.toFixed(2));
+              circle.setAttribute("r",  r.toFixed(2));
+              circle.setAttribute("class", "drill-via");
+              circle.dataset.status = `Vía ${pt.id}  x:${pt.x.toFixed(1)} y:${pt.y.toFixed(1)}`;
+              group.append(circle);
+            }
+          } else {
+            for (const d of state.drills) {
+              const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              circle.setAttribute("cx", d.x.toFixed(2));
+              circle.setAttribute("cy", d.y.toFixed(2));
+              circle.setAttribute("r",  (d.r || 10).toFixed(2));
+              circle.setAttribute("class", "drill-via");
+              circle.dataset.status = `Taladro ${d.id}  x:${d.x.toFixed(1)} y:${d.y.toFixed(1)}`;
+              group.append(circle);
+            }
           }
           drillOverlay.append(group);
         }
@@ -3276,6 +3283,7 @@
 
           // Taladros: mapa id → {x, y, r}
           const drillsList = drillsRaw?.drills ?? (Array.isArray(drillsRaw) ? drillsRaw : []);
+          state.drills = drillsList;
           const drillsById = new Map(drillsList.map(d => [d.id, d]));
 
           // Normalizar componentes: drills:[id,...] → pins:[{n,cx,cy,r}] + bbox/poly
