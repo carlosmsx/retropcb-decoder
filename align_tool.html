@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Align — PCB Reverser</title>
   <style>
@@ -81,6 +82,9 @@
     .btn-b { border-color: #ff4e4e55; color: var(--red); }
     .btn-b:hover { background: #ff4e4e18; }
     .btn-b.active { background: #ff4e4e28; border-color: var(--red); }
+
+    .size-btn { font-size: 12px; }
+    .size-btn.active { background: #29d28f18; border-color: var(--accent); color: var(--accent); }
 
     .slider-wrap {
       display: flex;
@@ -293,7 +297,16 @@
     <button class="btn-a" id="btn-load-a">Cargar lado A</button>
     <button class="btn-b" id="btn-load-b">Cargar lado B</button>
     <button class="btn-b" id="btn-flip-b"  title="Flip horizontal lado B">⟺ Flip B H</button>
-    <button class="btn-b"       id="btn-flip-bv" title="Flip vertical lado B">⥯ Flip B V</button>
+    <button class="btn-b" id="btn-flip-bv" title="Flip vertical lado B">⥯ Flip B V</button>
+  </div>
+
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+
+  <div class="ctrl-group" id="size-btns">
+    <button class="size-btn active" id="btn-size-natural" title="Tamaños naturales de cada imagen">Natural</button>
+    <button class="size-btn"        id="btn-size-a"       title="Escalar ambas al tamaño de A">Tamaño A</button>
+    <button class="size-btn"        id="btn-size-b"       title="Escalar ambas al tamaño de B">Tamaño B</button>
+    <button class="size-btn"        id="btn-size-mid"     title="Escalar ambas al promedio">Intermedio</button>
   </div>
 
   <button id="btn-export" disabled>Exportar JSON</button>
@@ -371,6 +384,7 @@
     nameB: null,
     flipB: false,
     flipBV: false,
+    sizeMode: "natural",  // "natural" | "a" | "b" | "mid"
   };
 
   /* ── DOM refs ──────────────────────────────────── */
@@ -400,36 +414,54 @@
   updateSlider();
 
   /* ── Draw helpers ──────────────────────────────── */
-  function drawA(img) {
-    const w = img.naturalWidth, h = img.naturalHeight;
-    canvasA.width  = w;
-    canvasA.height = h;
 
-    // Green tint on A
-    ctxA.drawImage(img, 0, 0);
-    ctxA.globalCompositeOperation = "multiply";
-    ctxA.fillStyle = "#00ff88";
-    ctxA.fillRect(0, 0, w, h);
-    ctxA.globalCompositeOperation = "source-over";
+  // Dimensiones de visualización de cada lado según sizeMode.
+  // En modo "natural" cada uno usa sus dimensiones reales y el canvas
+  // compartido es el máximo — la diferencia queda visible como negro.
+  function effectiveDims() {
+    const { wA = 0, hA = 0, wB = 0, hB = 0, sizeMode } = state;
+    switch (sizeMode) {
+      case "a":   return { dA: { w: wA, h: hA }, dB: { w: wA, h: hA } };
+      case "b":   return { dA: { w: wB, h: hB }, dB: { w: wB, h: hB } };
+      case "mid": return {
+        dA: { w: Math.round((wA + wB) / 2), h: Math.round((hA + hB) / 2) },
+        dB: { w: Math.round((wA + wB) / 2), h: Math.round((hA + hB) / 2) },
+      };
+      default: return { dA: { w: wA, h: hA }, dB: { w: wB, h: hB } };
+    }
   }
 
-  function drawB(img, refW, refH, flipH, flipV) {
-    const w = refW || img.naturalWidth;
-    const h = refH || img.naturalHeight;
-    canvasB.width  = w;
-    canvasB.height = h;
+  function redrawBoth() {
+    const { dA, dB } = effectiveDims();
+    const cw = Math.max(dA.w, dB.w);
+    const ch = Math.max(dA.h, dB.h);
+    if (!cw || !ch) return;
 
-    ctxB.save();
-    ctxB.translate(flipH ? w : 0, flipV ? h : 0);
-    ctxB.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-    ctxB.drawImage(img, 0, 0, w, h);
-    ctxB.restore();
+    // Canvas A
+    canvasA.width  = cw;
+    canvasA.height = ch;
+    if (state.imgA && dA.w && dA.h) {
+      ctxA.drawImage(state.imgA, 0, 0, dA.w, dA.h);
+      ctxA.globalCompositeOperation = "multiply";
+      ctxA.fillStyle = "#00ff88";
+      ctxA.fillRect(0, 0, dA.w, dA.h);
+      ctxA.globalCompositeOperation = "source-over";
+    }
 
-    // Red tint
-    ctxB.globalCompositeOperation = "multiply";
-    ctxB.fillStyle = "#ff4444";
-    ctxB.fillRect(0, 0, w, h);
-    ctxB.globalCompositeOperation = "source-over";
+    // Canvas B — con flip sobre sus dimensiones efectivas
+    canvasB.width  = cw;
+    canvasB.height = ch;
+    if (state.imgB && dB.w && dB.h) {
+      ctxB.save();
+      ctxB.translate(state.flipB ? dB.w : 0, state.flipBV ? dB.h : 0);
+      ctxB.scale(state.flipB ? -1 : 1, state.flipBV ? -1 : 1);
+      ctxB.drawImage(state.imgB, 0, 0, dB.w, dB.h);
+      ctxB.restore();
+      ctxB.globalCompositeOperation = "multiply";
+      ctxB.fillStyle = "#ff4444";
+      ctxB.fillRect(0, 0, dB.w, dB.h);
+      ctxB.globalCompositeOperation = "source-over";
+    }
   }
 
   function makeThumbnail(img, container, flipped) {
@@ -502,19 +534,14 @@
     state.wA    = img.naturalWidth;
     state.hA    = img.naturalHeight;
 
-    drawA(img);
+    redrawBoth();
     makeThumbnail(img, thumbA, false);
     placeholder.style.display = "none";
 
     infoA.textContent = `${name}\n${fmtSize(state.wA, state.hA)}`;
     statusA.textContent = `Lado A: ${fmtSize(state.wA, state.hA)}`;
     updateExportBtn();
-
-    // Redraw B at A's dimensions if already loaded
-    if (state.imgB) {
-      drawB(state.imgB, state.wA, state.hA);
-      updateOverlayStatus();
-    }
+    updateOverlayStatus();
   });
 
   /* ── Load B ────────────────────────────────────── */
@@ -528,11 +555,8 @@
     state.wB    = img.naturalWidth;
     state.hB    = img.naturalHeight;
 
-    const refW = state.imgA ? state.wA : state.wB;
-    const refH = state.imgA ? state.hA : state.hB;
-    drawB(img, refW, refH, state.flipB, state.flipBV);
-
-    makeThumbnail(img, thumbB, true);
+    redrawBoth();
+    makeThumbnail(img, thumbB, state.flipB);
     placeholder.style.display = "none";
 
     infoB.textContent = `${name}\n${fmtSize(state.wB, state.hB)}`;
@@ -544,10 +568,7 @@
 
   /* ── Flip B ────────────────────────────────────── */
   function redrawB() {
-    if (!state.imgB) return;
-    const refW = state.imgA ? state.wA : state.wB;
-    const refH = state.imgA ? state.hA : state.hB;
-    drawB(state.imgB, refW, refH, state.flipB, state.flipBV);
+    redrawBoth();
     makeThumbnail(state.imgB, thumbB, state.flipB);
   }
 
@@ -573,11 +594,16 @@
   }
 
   btnExport.addEventListener("click", () => {
+    const { dA, dB } = effectiveDims();
     const data = {
-      side_a: state.nameA || null,
-      side_b: state.nameB || null,
-      flip_h: state.flipB,
-      flip_v: state.flipBV,
+      side_a:    state.nameA || null,
+      side_b:    state.nameB || null,
+      flip_h:    state.flipB,
+      flip_v:    state.flipBV,
+      size_mode: state.sizeMode,
+      output_size: (state.sizeMode === "natural")
+        ? null
+        : { w: dA.w, h: dA.h },
       alignment: null,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -588,12 +614,29 @@
     URL.revokeObjectURL(a.href);
   });
 
+  /* ── Botones de tamaño ─────────────────────────── */
+  const sizeBtns = document.querySelectorAll(".size-btn");
+  function setSizeMode(mode) {
+    state.sizeMode = mode;
+    sizeBtns.forEach(b => b.classList.toggle("active", b.id === `btn-size-${mode}`));
+    redrawBoth();
+    updateOverlayStatus();
+  }
+  document.getElementById("btn-size-natural").addEventListener("click", () => setSizeMode("natural"));
+  document.getElementById("btn-size-a")      .addEventListener("click", () => setSizeMode("a"));
+  document.getElementById("btn-size-b")      .addEventListener("click", () => setSizeMode("b"));
+  document.getElementById("btn-size-mid")    .addEventListener("click", () => setSizeMode("mid"));
+
   function updateOverlayStatus() {
     if (!state.imgA || !state.imgB) return;
-    const match = (state.wA === state.wB && state.hA === state.hB);
-    statusOverlay.textContent = match
-      ? "Overlay: dimensiones coinciden ✓"
-      : `Overlay: B escalado a ${fmtSize(state.wA, state.hA)}`;
+    const { dA, dB } = effectiveDims();
+    const sizeLabel = {
+      natural: `A: ${fmtSize(state.wA, state.hA)}  B: ${fmtSize(state.wB, state.hB)}`,
+      a:       `Ambas → ${fmtSize(dA.w, dA.h)} (tamaño A)`,
+      b:       `Ambas → ${fmtSize(dB.w, dB.h)} (tamaño B)`,
+      mid:     `Ambas → ${fmtSize(dA.w, dA.h)} (intermedio)`,
+    }[state.sizeMode];
+    statusOverlay.textContent = sizeLabel;
   }
 </script>
 

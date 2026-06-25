@@ -15,6 +15,7 @@ import argparse
 import json
 import math
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -98,7 +99,26 @@ def default_images_from_project(project):
     layers = project.get("scan", {}).get("layers", [])
     if not layers:
         return ["img/pcb_a.png", "img/pcb_b.png"]
-    return [f"img/{layer['id']}.png" for layer in layers]
+    result = []
+    for layer in layers:
+        if layer.get("silk"):
+            continue
+        # Si la capa tiene 'image', usar ese path; si no, derivar del id
+        result.append(layer.get("image") or f"img/{layer['id']}.png")
+    return result
+
+
+def layer_id_for_image(project, image_path):
+    """Devuelve el layer ID de project.json que corresponde a una imagen dada, o None."""
+    layers = project.get("scan", {}).get("layers", [])
+    stem = Path(image_path).stem
+    for layer in layers:
+        if layer.get("silk"):
+            continue
+        layer_image = layer.get("image") or f"img/{layer['id']}.png"
+        if Path(layer_image).stem == stem or layer["id"] == stem:
+            return layer["id"]
+    return None
 
 
 def main():
@@ -129,11 +149,41 @@ def main():
 
     out_root = Path(args.out)
     out_root.mkdir(parents=True, exist_ok=True)
-    manifest = {"tileSize": args.tile_size, "boards": {}}
+
+    # Metadata de proyecto
+    scan_cfg = project.get("scan", {})
+    grid_cfg = project.get("grid", {})
+    dpi = scan_cfg.get("dpi")
+    pitch_mm = grid_cfg.get("pitch_mm")
+    pitch_px = grid_cfg.get("pitch_px")
+    px_per_mm = None
+    if pitch_mm and pitch_px:
+        px_per_mm = round(pitch_px / pitch_mm, 4)
+    elif dpi:
+        px_per_mm = round(dpi / 25.4, 4)
+
+    # Datos de alineamiento (opcional)
+    align_data = None
+    align_path = Path("align.json")
+    if align_path.exists():
+        try:
+            align_data = json.loads(align_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    manifest = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "tileSize": args.tile_size,
+        "dpi": dpi,
+        "px_per_mm": px_per_mm,
+        "align": align_data,
+        "boards": {},
+    }
 
     for image_name in args.images:
         image_path = Path(image_name)
-        board_id = image_path.stem
+        # Usar el layer ID de project.json como board key; fallback al stem del archivo
+        board_id = layer_id_for_image(project, image_path) or image_path.stem
         board_dir = out_root / board_id
         if board_dir.exists():
             shutil.rmtree(board_dir)

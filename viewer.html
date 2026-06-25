@@ -2,10 +2,11 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PCB Viewer</title>
-    <link rel="icon" type="image/png" href="img/favicon.png">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
     <script src="src/i18n.js"></script>
     <style>
@@ -254,6 +255,13 @@
         pointer-events: none;
       }
 
+      .trace-outline {
+        fill: none;
+        stroke: rgba(0, 0, 0, .55);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
       .trace-line {
         fill: none;
         opacity: .78;
@@ -384,15 +392,24 @@
         cursor: default;
       }
 
-      .ic-bbox-label {
+      .ic-bbox-label,
+      .con-bbox-label, .con50-bbox-label,
+      .con50-a-bbox-label, .con50-b-bbox-label,
+      .rnet-bbox-label,
+      .cap-label, .res-label,
+      .relay-label, .jp-label, .xtal-label,
+      .trn-label, .ind-label {
         font-size: 18px;
         font-weight: 700;
         font-family: "Courier New", monospace;
         text-anchor: middle;
-        dominant-baseline: alphabetic;
-        fill: rgba(0, 194, 255, .9);
+        dominant-baseline: central;
         pointer-events: none;
         user-select: none;
+      }
+
+      .ic-bbox-label {
+        fill: rgba(0, 194, 255, .9);
       }
 
       .drill-pad {
@@ -400,6 +417,14 @@
         stroke: rgba(255, 255, 255, .70);
         stroke-width: 1.2;
       }
+
+      .drill-cap  { fill: rgba(255, 220, 0, .22);  stroke: rgba(255, 210, 0, .90);  stroke-width: 1.5; }
+      .drill-res  { fill: rgba(255, 140, 0, .22);  stroke: rgba(255, 120, 0, .90);  stroke-width: 1.5; }
+      .drill-ind  { fill: rgba(180, 80,  255, .22); stroke: rgba(150, 50, 220, .90); stroke-width: 1.5; }
+      .drill-jp   { fill: rgba(255, 160, 0, .22);  stroke: rgba(220, 130, 0, .90);  stroke-width: 1.5; }
+      .drill-xtal { fill: rgba(0,   210, 180, .22); stroke: rgba(0,  180, 150, .90); stroke-width: 1.5; }
+      .drill-trn  { fill: rgba(180, 120, 255, .22); stroke: rgba(160, 96, 240, .90);  stroke-width: 1.5; }
+      .drill-dio  { fill: rgba(80,  200, 100, .22); stroke: rgba(50, 180,  80, .90);  stroke-width: 1.5; }
 
       .drill-relay {
         fill: rgba(255, 80, 80, .30);
@@ -427,15 +452,6 @@
         stroke-dasharray: 8 4;
         pointer-events: all;
         cursor: default;
-      }
-      .con-bbox-label, .con50-bbox-label {
-        font-size: 22px;
-        font-weight: 700;
-        font-family: "Courier New", monospace;
-        text-anchor: middle;
-        dominant-baseline: alphabetic;
-        pointer-events: none;
-        user-select: none;
       }
       .con-bbox-label     { fill: rgba(255, 200, 50, 1); }
       .con50-a-bbox       { fill: rgba(190, 96, 255, .18); stroke: rgba(190, 96, 255, .95);
@@ -468,16 +484,9 @@
         cursor: default;
       }
 
-      .rnet-bbox-label {
-        font-size: 18px;
-        font-weight: 700;
-        font-family: "Courier New", monospace;
-        text-anchor: middle;
-        dominant-baseline: alphabetic;
-        pointer-events: none;
-        user-select: none;
-        fill: rgba(255, 120, 0, 1);
-      }
+      .cap-label   { fill: rgba(255, 210, 0, 0.9); }
+      .res-label   { fill: rgba(255, 120, 0, 0.9); }
+      .rnet-bbox-label { fill: rgba(255, 120, 0, 1); }
 
       .res-footprint {
         fill: rgba(255, 140, 0, .20);
@@ -510,12 +519,7 @@
         cursor: default;
       }
 
-      .relay-label {
-        font-size: 20px;
-        fill: rgba(180, 30, 30, 0.9);
-        font-weight: bold;
-        pointer-events: none;
-      }
+      .relay-label { fill: rgba(180, 30, 30, 0.9); }
 
       .jp-footprint {
         fill: rgba(255, 160, 0, .18);
@@ -526,12 +530,7 @@
         cursor: default;
       }
 
-      .jp-label {
-        font-size: 18px;
-        fill: rgba(200, 110, 0, 0.9);
-        font-weight: bold;
-        pointer-events: none;
-      }
+      .jp-label  { fill: rgba(200, 110, 0, 0.9); }
 
       .xtal-footprint {
         fill: rgba(0, 210, 180, .15);
@@ -541,12 +540,7 @@
         cursor: default;
       }
 
-      .xtal-label {
-        font-size: 18px;
-        fill: rgba(0, 160, 130, 0.9);
-        font-weight: bold;
-        pointer-events: none;
-      }
+      .xtal-label  { fill: rgba(0, 160, 130, 0.9); }
 
       .trn-footprint {
         fill: rgba(180, 120, 255, .18);
@@ -556,12 +550,7 @@
         cursor: default;
       }
 
-      .trn-label {
-        font-size: 18px;
-        fill: rgba(160, 96, 240, 0.9);
-        font-weight: bold;
-        pointer-events: none;
-      }
+      .trn-label   { fill: rgba(160, 96, 240, 0.9); }
 
       .drill-trn {
         fill: rgba(180, 120, 255, .22);
@@ -577,12 +566,7 @@
         cursor: default;
       }
 
-      .ind-label {
-        font-size: 18px;
-        fill: rgba(150, 50, 220, 0.9);
-        font-weight: bold;
-        pointer-events: none;
-      }
+      .ind-label   { fill: rgba(150, 50, 220, 0.9); }
 
 
 
@@ -717,6 +701,8 @@
         transition: background .1s, border-color .1s;
         flex-shrink: 0;
       }
+
+      #share-btn.copied { color: var(--green); }
 
       /* En la grilla del toolbox sí ocupa todo el ancho de la celda */
       .lg-buttons .tool-button {
@@ -890,6 +876,7 @@
       <button id="fit"      type="button" data-i18n-title="tb.fit.title" title="Ajustar vista"><i class="ti ti-focus-centered"></i></button>
       <button id="one"      type="button" title="100%">1:1</button>
       <button class="tool-button" id="search-btn" type="button" title="Buscar componente"><i class="ti ti-search"></i><span class="btn-lbl">buscar</span></button>
+      <button class="tool-button" id="share-btn" type="button" title="Copiar link del estado actual"><i class="ti ti-link"></i><span class="btn-lbl">link</span></button>
       <span class="toolbar-sep"></span>
       <label class="opacity-control" id="opacity-control">
         <span title="Opacidad capa B">B</span>
@@ -1114,6 +1101,9 @@
         selectedTraceId: null,   // legacy compat — apunta al primer selectedSegId
         netByTrace: new Map(),   // legacy compat
         tracesByNet: new Map(),  // legacy compat
+        selectedLegacyTraceId: null,
+        selectedLegacyNet: null,
+        selectedLegacyNetGroup: null,
         showOrphans: false,
         orphanEndpoints: [],
       };
@@ -1223,6 +1213,19 @@
         }
       }
 
+      document.querySelector("#share-btn").addEventListener("click", () => {
+        stateToHash();
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          const btn = document.querySelector("#share-btn");
+          btn.classList.add("copied");
+          btn.title = "¡Link copiado!";
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.title = "Copiar link del estado actual";
+          }, 2000);
+        });
+      });
+
       searchBtn.addEventListener("click", openSearchDialog);
       searchOk.addEventListener("click", doSearch);
       searchCancel.addEventListener("click", closeSearchDialog);
@@ -1296,7 +1299,7 @@
           const pt = state.graphPoints.get(pin.point_id);
           if (pt && pt.r) return pt.r;
         }
-        return defaultR;
+        return pin.r ?? defaultR;
       }
 
       // Resuelve las coordenadas de un pin desde points.json vía point_id.
@@ -1381,6 +1384,56 @@
         line.setAttribute("class", ["trace-line", sideClass, stateClass].filter(Boolean).join(" "));
         line.setAttribute("stroke-width", String(traceW));
         parent.append(outline, line);
+      }
+
+      function buildTraceConnectivity(traces) {
+        // Conectividad por coordenadas exactas: el snap del trace_editor garantiza
+        // que endpoints conectados comparten el mismo punto (o caen a ≤2px por
+        // imprecisión de float). Sin aproximaciones mayores.
+        const parent = new Map();
+        function find(id) {
+          if (!parent.has(id)) return id;
+          const root = find(parent.get(id));
+          parent.set(id, root);
+          return root;
+        }
+        function union(a, b) {
+          a = find(a); b = find(b);
+          if (a !== b) parent.set(b, a);
+        }
+
+        // Índice de todos los puntos de todas las trazas
+        const CELL = 4;
+        const grid = new Map();
+        for (const trace of traces) {
+          for (const pt of trace.points) {
+            const key = `${Math.round(pt.x / CELL)}:${Math.round(pt.y / CELL)}`;
+            if (!grid.has(key)) grid.set(key, []);
+            grid.get(key).push({ traceId: trace.id, x: pt.x, y: pt.y });
+          }
+        }
+
+        // Para cada endpoint, buscar puntos de otras trazas en celdas vecinas (≤2px)
+        for (const trace of traces) {
+          const pts = trace.points;
+          for (const ep of [pts[0], pts[pts.length - 1]]) {
+            const cx = Math.round(ep.x / CELL);
+            const cy = Math.round(ep.y / CELL);
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                for (const e of (grid.get(`${cx+dx}:${cy+dy}`) || [])) {
+                  if (e.traceId !== trace.id && Math.hypot(ep.x - e.x, ep.y - e.y) <= 2) {
+                    union(trace.id, e.traceId);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        for (const trace of traces) {
+          trace.netGroup = find(trace.id);
+        }
       }
 
       function normalizeTraces(data) {
@@ -1496,7 +1549,12 @@
 
       // legacy compat
       function traceInSelectedNet(trace) { return false; }
-      function traceStateClass(trace) { return ""; }
+      function traceStateClass(trace) {
+        if (!state.selectedLegacyNetGroup) return "";
+        if (trace.netGroup !== state.selectedLegacyNetGroup) return "is-dimmed";
+        if (trace.id === state.selectedLegacyTraceId) return "is-selected";
+        return "is-net";
+      }
 
       function distanceToSegment(point, a, b) {
         const vx = b.x - a.x;
@@ -1525,6 +1583,27 @@
           if (dist < nearestDist) { nearest = seg; nearestDist = dist; }
         }
         return nearestDist <= threshold ? nearest : null;
+      }
+
+      function nearestLegacyTrace(point) {
+        let nearest = null;
+        let nearestDist = Infinity;
+        const baseTol = 8 / Math.max(state.zoom, 0.1);
+        for (const trace of state.traces) {
+          const showSide = trace.side === "B" ? state.showTraceB : state.showTraceA;
+          if (!showSide) continue;
+          const threshold = (Number(trace.width) || 10) / 2 + baseTol;
+          const pts = trace.points;
+          for (let i = 0; i < pts.length - 1; i++) {
+            const a = pts[i], b = pts[i + 1];
+            const vx = b.x - a.x, vy = b.y - a.y;
+            const len2 = vx * vx + vy * vy;
+            const t = len2 === 0 ? 0 : clamp(((point.x - a.x) * vx + (point.y - a.y) * vy) / len2, 0, 1);
+            const dist = Math.hypot(point.x - (a.x + t * vx), point.y - (a.y + t * vy));
+            if (dist < threshold && dist < nearestDist) { nearest = trace; nearestDist = dist; }
+          }
+        }
+        return nearest;
       }
 
       function selectSegment(segId, additive = false) {
@@ -2191,10 +2270,8 @@
         if (state.showCaps) {
           const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
           for (const cap of components.filter(c => c.comp_type === "CAP")) {
-            if (!cap.dist_px || cap.dist_px < 40 || cap.dist_px > 160) continue;
-            const labelParts = [`${cap.ref || cap.id} (${(cap.dist_mm || 0).toFixed(1)}mm)`];
+            const labelParts = [`${cap.ref || cap.id}`];
             if (cap.value) labelParts.push(cap.value);
-            if (cap.type)  labelParts.push(cap.type);
             if (cap.note)  labelParts.push(cap.note);
             const label = labelParts.join('  ·  ');
             if (cap.poly && cap.poly.length >= 3) {
@@ -2204,9 +2281,21 @@
               poly.dataset.status = label;
               poly.dataset.compId = String(cap.id);
               group.append(poly);
+              if (cap.cx != null && cap.cy != null) {
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", cap.cx);
+                txt.setAttribute("y", cap.cy);
+                txt.setAttribute("text-anchor", "middle");
+                txt.setAttribute("dominant-baseline", "central");
+                txt.classList.add("cap-label");
+                txt.dataset.compId = String(cap.id);
+                txt.dataset.status = label;
+                txt.textContent = cap.ref || cap.id;
+                group.append(txt);
+              }
             }
             for (const pin of cap.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${cap.ref || cap.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-cap", `${cap.ref || cap.id} — pin ${pin.n}`);
               c.dataset.compId = String(cap.id);
             }
           }
@@ -2216,9 +2305,7 @@
         if (state.showRes) {
           const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
           for (const res of components.filter(c => c.comp_type === "RES")) {
-            const labelParts = [`${res.ref || res.id} (${(res.dist_mm || 0).toFixed(1)}mm)`];
-            if (res.note) labelParts.push(res.note);
-            const label = labelParts.join('  ·  ');
+            const label = `${res.ref || res.id}${res.note ? '  ·  ' + res.note : ''}`;
             if (res.poly && res.poly.length >= 3) {
               const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
               poly.setAttribute("points", res.poly.map(([x, y]) => `${x},${y}`).join(" "));
@@ -2226,9 +2313,21 @@
               poly.dataset.status = label;
               poly.dataset.compId = String(res.id);
               group.append(poly);
+              if (res.cx != null && res.cy != null) {
+                const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                txt.setAttribute("x", res.cx);
+                txt.setAttribute("y", res.cy);
+                txt.setAttribute("text-anchor", "middle");
+                txt.setAttribute("dominant-baseline", "central");
+                txt.classList.add("res-label");
+                txt.dataset.compId = String(res.id);
+                txt.dataset.status = label;
+                txt.textContent = res.ref || res.id;
+                group.append(txt);
+              }
             }
             for (const pin of res.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${res.ref || res.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-res", `${res.ref || res.id} — pin ${pin.n}`);
               c.dataset.compId = String(res.id);
             }
           }
@@ -2274,7 +2373,7 @@
               group.append(arrow);
             }
             for (const pin of dio.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${dio.ref || dio.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-dio", `${dio.ref || dio.id} — pin ${pin.n}`);
               c.dataset.compId = String(dio.id);
             }
           }
@@ -2307,7 +2406,7 @@
               group.append(txt);
             }
             for (const pin of ind.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${ind.ref || ind.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-ind", `${ind.ref || ind.id} — pin ${pin.n}`);
               c.dataset.compId = String(ind.id);
             }
           }
@@ -2373,7 +2472,7 @@
               group.append(txt);
             }
             for (const pin of jp.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${jp.ref || jp.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-jp", `${jp.ref || jp.id} — pin ${pin.n}`);
               c.dataset.compId = String(jp.id);
             }
           }
@@ -2405,7 +2504,7 @@
               group.append(txt);
             }
             for (const pin of xtal.pins || []) {
-              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-pad", `${xtal.ref || xtal.id} — pin ${pin.n}`);
+              const c = appendDrillCircle(group, pin, pinDrillRadius(pin), "drill-xtal", `${xtal.ref || xtal.id} — pin ${pin.n}`);
               c.dataset.compId = String(xtal.id);
             }
           }
@@ -2448,7 +2547,8 @@
 
       function renderTraceOverlay() {
         traceOverlay.replaceChildren();
-        const shouldHide = !state.graphSegments.length || !traceLayersEnabled();
+        const hasTraces = state.graphSegments.length > 0 || state.traces.length > 0;
+        const shouldHide = !hasTraces || !traceLayersEnabled();
         traceOverlay.style.display = shouldHide ? "none" : "block";
         if (shouldHide) return;
 
@@ -2456,6 +2556,10 @@
         for (const seg of state.graphSegments) {
           const showSide = seg.layer === "B" ? state.showTraceB : state.showTraceA;
           if (showSide) appendSegment(group, seg);
+        }
+        for (const trace of state.traces) {
+          const showSide = trace.side === "B" ? state.showTraceB : state.showTraceA;
+          if (showSide) appendTrace(group, trace);
         }
         traceOverlay.append(group);
       }
@@ -2490,12 +2594,157 @@
         if (highlightOverlay.childElementCount > 0) highlightOverlay.style.display = "block";
       }
 
+      // ── URL state ─────────────────────────────────────────────────────────
+      const FLAG_KEYS = [
+        'showPCB', 'showSilkscreen', 'showVias', 'showICs',
+        'showConnectors', 'showLargeConnectors', 'showCaps', 'showRes',
+        'showDio', 'showInd', 'showXtal', 'showTrn',
+        'showJp', 'showRelay', 'showTraceA', 'showTraceB', 'showOrphans',
+      ];
+      const FLAG_SELECTORS = {
+        showPCB:             '#pcb-toggle',
+        showSilkscreen:      '#silkscreen-toggle',
+        showVias:            '#vias-toggle',
+        showICs:             '#ics-toggle',
+        showConnectors:      '#connectors-toggle',
+        showLargeConnectors: '#large-connectors-toggle',
+        showCaps:            '#caps-toggle',
+        showRes:             '#res-toggle',
+        showDio:             '#dio-toggle',
+        showInd:             '#ind-toggle',
+        showXtal:            '#xtal-toggle',
+        showTrn:             '#trn-toggle',
+        showJp:              '#jp-toggle',
+        showRelay:           '#relay-toggle',
+        showTraceA:          '#trace-a-toggle',
+        showTraceB:          '#trace-b-toggle',
+        showOrphans:         '#orphan-toggle',
+      };
+
+      function syncToggleUI() {
+        for (const [key, sel] of Object.entries(FLAG_SELECTORS)) {
+          const el = document.querySelector(sel);
+          if (el) el.classList.toggle('is-active', !!state[key]);
+        }
+      }
+
+      function stateToHash() {
+        let v = 0;
+        FLAG_KEYS.forEach((k, i) => { if (state[k]) v |= (1 << i); });
+        const p = new URLSearchParams();
+        if (state.mode) p.set('m', state.mode);
+        p.set('v', v.toString(16));
+        p.set('z', state.zoom.toFixed(2));
+        p.set('px', Math.round(state.x));
+        p.set('py', Math.round(state.y));
+        if (state.selectedLegacyTraceId) p.set('tid', state.selectedLegacyTraceId);
+        history.replaceState(null, '', '#' + p.toString());
+      }
+
+      let _hashTimer = null;
+      function pushHash() {
+        clearTimeout(_hashTimer);
+        _hashTimer = setTimeout(stateToHash, 200);
+      }
+
+      function enableLayerForRef(ref) {
+        const comps = state.componentsData?.components;
+        if (!comps) return;
+        const needle = ref.trim().toUpperCase();
+        const comp = comps.find(c => (c.ref || '').toUpperCase() === needle);
+        if (!comp) return;
+        const layerMap = {
+          IC:    ['#ics-toggle',              () => { state.showICs = true; }],
+          CAP:   ['#caps-toggle',             () => { state.showCaps = true; }],
+          RES:   ['#res-toggle',              () => { state.showRes = true; }],
+          RNET:  ['#res-toggle',              () => { state.showRes = true; }],
+          CON:   ['#connectors-toggle',       () => { state.showConnectors = true; }],
+          CON50: ['#large-connectors-toggle', () => { state.showLargeConnectors = true; }],
+          DIO:   ['#dio-toggle',              () => { state.showDio = true; }],
+          IND:   ['#ind-toggle',              () => { state.showInd = true; }],
+          XTAL:  ['#xtal-toggle',             () => { state.showXtal = true; }],
+          TRN:   ['#trn-toggle',              () => { state.showTrn = true; }],
+          JP:    ['#jp-toggle',               () => { state.showJp = true; }],
+          RELAY: ['#relay-toggle',            () => { state.showRelay = true; }],
+        };
+        const entry = layerMap[comp.comp_type];
+        if (entry) {
+          const [sel, setter] = entry;
+          document.querySelector(sel)?.classList.add('is-active');
+          setter();
+          markDrillDirty();
+        }
+      }
+
+      function applyHashToState() {
+        const raw = window.location.hash.slice(1);
+        if (!raw) { fitToScreen(); return; }
+        const p = new URLSearchParams(raw);
+        const urlRef = p.get('ref');
+
+        // legacy #ref=XX link sin v — solo navegar al componente
+        if (urlRef && !p.has('v')) {
+          fitToScreen();
+          enableLayerForRef(urlRef);
+          navigateToComponent(urlRef);
+          return;
+        }
+
+        // modo (layer o overlay)
+        const m = p.get('m');
+        if (m && (state.layerIds.includes(m) || m === 'overlay')) {
+          switchMode(m);
+          boardSelect.value = m;
+        }
+
+        // flags de visibilidad
+        const vStr = p.get('v');
+        if (vStr !== null) {
+          const v = parseInt(vStr, 16) || 0;
+          FLAG_KEYS.forEach((k, i) => { state[k] = !!(v & (1 << i)); });
+          syncToggleUI();
+          markDrillDirty();
+          markTraceDirty();
+          markOrphanDirty();
+        }
+
+        // zoom y posición
+        const z  = parseFloat(p.get('z'));
+        const px = parseFloat(p.get('px'));
+        const py = parseFloat(p.get('py'));
+        if (!isNaN(z) && !isNaN(px) && !isNaN(py)) {
+          state.zoom = z;
+          state.x    = px;
+          state.y    = py;
+        } else {
+          fitToScreen();
+        }
+
+        if (urlRef) { enableLayerForRef(urlRef); navigateToComponent(urlRef); }
+
+        // traza seleccionada
+        const tid = p.get('tid');
+        if (tid) {
+          const trace = state.traces.find(t => t.id === tid);
+          if (trace) {
+            state.selectedLegacyTraceId  = trace.id;
+            state.selectedLegacyNet      = trace.net;
+            state.selectedLegacyNetGroup = trace.netGroup;
+            markTraceDirty();
+          }
+        }
+
+        render();
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       // render() encola un frame; doRender() ejecuta el trabajo real
       function render() {
         if (_rafId !== null) return;
         _rafId = requestAnimationFrame(() => {
           _rafId = null;
           doRender();
+          pushHash();
         });
       }
 
@@ -2815,18 +3064,30 @@
         if (_dragDidMove) { _dragDidMove = false; return; }
         if (!traceLayersEnabled()) return;
         const point = clientToImage(event.clientX, event.clientY);
-        const hit   = nearestSegment(point);
-        const newId = hit ? hit.id : null;
-        if (event.shiftKey) {
-          // Shift+click: agrega/quita la net de la selección múltiple
-          selectSegment(newId, true);
-        } else {
-          // Click normal: selección única; click en el mismo → deselecciona
-          const isSameOnly = newId !== null
-            && state.selectedSegIds.size === 1
-            && state.selectedSegIds.has(newId);
-          selectSegment(isSameOnly ? null : newId, false);
+
+        // ── Modelo de grafo (Phase 4) ─────────────────────────────────
+        if (state.graphSegments.length > 0) {
+          const hit   = nearestSegment(point);
+          const newId = hit ? hit.id : null;
+          if (event.shiftKey) {
+            selectSegment(newId, true);
+          } else {
+            const isSameOnly = newId !== null
+              && state.selectedSegIds.size === 1
+              && state.selectedSegIds.has(newId);
+            selectSegment(isSameOnly ? null : newId, false);
+          }
+          return;
         }
+
+        // ── Trazas legacy ─────────────────────────────────────────────
+        const hit = nearestLegacyTrace(point);
+        const isSame = hit && hit.id === state.selectedLegacyTraceId;
+        state.selectedLegacyTraceId  = isSame ? null : (hit ? hit.id       : null);
+        state.selectedLegacyNet      = isSame ? null : (hit ? hit.net      : null);
+        state.selectedLegacyNetGroup = isSame ? null : (hit ? hit.netGroup : null);
+        markTraceDirty();
+        render();
       });
 
       viewer.addEventListener("dblclick", (event) => {
@@ -2847,6 +3108,17 @@
           case "-": setZoom(state.zoom / 1.4); break;
           case "f": case "F": case "0": fitToScreen(); break;
           case "1": setZoom(1); break;
+          case "Escape":
+            if (state.selectedLegacyTraceId) {
+              state.selectedLegacyTraceId  = null;
+              state.selectedLegacyNet      = null;
+              state.selectedLegacyNetGroup = null;
+              markTraceDirty();
+              render();
+            } else if (state.selectedSegIds.size > 0) {
+              selectSegment(null);
+            }
+            break;
         }
       });
 
@@ -2973,7 +3245,7 @@
         document.querySelectorAll(".layer-group").forEach(g => g.classList.add("is-closed"));
       }
 
-      fetch(assetUrl("project.json")).then(r => r.ok ? r.json() : {}).catch(() => ({}))
+      fetch(assetUrl("data/project.json")).then(r => r.ok ? r.json() : {}).catch(() => ({}))
         .then(project => {
           // Poblar título y nombre en navbar
           const projectName = project?.name || "PCB Viewer";
@@ -3014,16 +3286,18 @@
               return r.json();
             }),
             fetch(assetUrl("data/components.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
+            fetch(assetUrl("data/drills.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
+            fetch(assetUrl("data/traces.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
             fetch(assetUrl("data/graph/points.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
             fetch(assetUrl("data/graph/segments.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
             fetch(assetUrl("data/ic_pinouts.json")).then((r) => r.ok ? r.json() : null).catch(() => null),
           ]);
         })
-        .then(([manifest, componentsRaw, pointsData, segmentsData, icPinoutsData]) => {
+        .then(([manifest, componentsRaw, drillsRaw, tracesRaw, pointsData, segmentsData, icPinoutsData]) => {
           if (icPinoutsData) Object.assign(IC_PINOUTS, icPinoutsData);
           state.manifest = manifest;
 
-          // Cargar modelo de grafo PRIMERO — pinCoords() lo necesita durante normalizeComponentsData
+          // Modelo de grafo nuevo (points + segments)
           if (pointsData?.points) {
             state.graphPoints = new Map(pointsData.points.map(p => [p.id, p]));
           }
@@ -3031,48 +3305,75 @@
             state.graphSegments = segmentsData.segments;
           }
 
-          // Normalizar componentes después de tener graphPoints disponible
+          // Pistas legacy (traces.json) cuando no hay grafo nuevo
+          if (tracesRaw) {
+            state.traces = normalizeTraces(tracesRaw);
+            buildTraceConnectivity(state.traces);
+          }
+
+          // Taladros: mapa id → {x, y, r}
+          const drillsList = drillsRaw?.drills ?? (Array.isArray(drillsRaw) ? drillsRaw : []);
+          const drillsById = new Map(drillsList.map(d => [d.id, d]));
+
+          // Normalizar componentes: drills:[id,...] → pins:[{n,cx,cy,r}] + bbox/poly
+          if (componentsRaw) {
+            const comps = componentsRaw.components ?? (Array.isArray(componentsRaw) ? componentsRaw : []);
+            comps.forEach((comp, i) => {
+              if (!comp.id) comp.id = comp.ref || i;
+              if (comp.comp_type === "TR") comp.comp_type = "TRN";
+              if (!comp.pins || comp.pins.length === 0) {
+                const ids = (comp.drills || []).map(x => typeof x === 'object' ? x.id : x);
+                comp.pins = ids.map((id, idx) => {
+                  const d = drillsById.get(Number(id));
+                  return { n: idx + 1, cx: d?.x ?? 0, cy: d?.y ?? 0, r: d?.r ?? 10 };
+                }).filter(p => p.cx !== 0 || p.cy !== 0);
+              }
+              // Calcular bbox y poly desde pins si no existen
+              if (comp.pins.length >= 2 && !comp.bbox && !comp.poly) {
+                const xs = comp.pins.map(p => p.cx);
+                const ys = comp.pins.map(p => p.cy);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const minY = Math.min(...ys), maxY = Math.max(...ys);
+                const pad = comp.pins.length > 6 ? 25 : 16;
+                comp.bbox = [[minX - pad, minY - pad], [maxX + pad, maxY + pad]];
+                if (comp.pins.length === 2) {
+                  // Rectángulo perpendicular al eje entre los dos pines
+                  const p1 = comp.pins[0], p2 = comp.pins[1];
+                  const dx = p2.cx - p1.cx, dy = p2.cy - p1.cy;
+                  const len = Math.hypot(dx, dy) || 1;
+                  const ux = dx / len, uy = dy / len;
+                  const ct = comp.comp_type;
+                  const isJP  = ct === 'JP';
+                  const isThin = ct === 'CAP' || ct === 'RES' || ct === 'IND';
+                  const hw = isJP   ? Math.max(12, Math.min(20, len * 0.15))
+                           : isThin ? Math.max(18, Math.min(32, len * 0.20))
+                           :          Math.max(28, Math.min(55, len * 0.28));
+                  const mg = isJP ? 6 : 10;
+                  comp.poly = [
+                    [p1.cx - uy*hw - ux*mg, p1.cy + ux*hw - uy*mg],
+                    [p1.cx + uy*hw - ux*mg, p1.cy - ux*hw - uy*mg],
+                    [p2.cx + uy*hw + ux*mg, p2.cy - ux*hw + uy*mg],
+                    [p2.cx - uy*hw + ux*mg, p2.cy + ux*hw + uy*mg],
+                  ];
+                } else {
+                  // Rectángulo del bbox para componentes con 3+ pines
+                  comp.poly = [
+                    [minX - pad, minY - pad], [maxX + pad, minY - pad],
+                    [maxX + pad, maxY + pad], [minX - pad, maxY + pad],
+                  ];
+                }
+              }
+            });
+          }
+
+          // Normalizar componentes después de tener graphPoints y pins disponibles
           state.componentsData = normalizeComponentsData(componentsRaw);
           buildGraphIndex();
           computeOrphanEndpoints();
           markDrillDirty();
           markTraceDirty();
           markOrphanDirty();
-          fitToScreen();
-          // Navigate to a component passed via URL hash, e.g. viewer.html#ref=U4
-          const urlRef = new URLSearchParams(window.location.hash.slice(1)).get('ref');
-          if (urlRef) {
-            // Enable the layer for this component type so it's visible
-            const _comps = state.componentsData && state.componentsData.components;
-            if (_comps) {
-              const _needle = urlRef.trim().toUpperCase();
-              const _comp = _comps.find(c => (c.ref || '').toUpperCase() === _needle);
-              if (_comp) {
-                const _layerMap = {
-                  IC:    [icsToggle,              () => { state.showICs = true; }],
-                  CAP:   [capsToggle,             () => { state.showCaps = true; }],
-                  RES:   [resToggle,              () => { state.showRes = true; }],
-                  RNET:  [resToggle,              () => { state.showRes = true; }],
-                  CON:   [connectorsToggle,       () => { state.showConnectors = true; }],
-                  CON50: [largeConnectorsToggle,  () => { state.showLargeConnectors = true; }],
-                  DIO:   [dioToggle,              () => { state.showDio = true; }],
-                  IND:   [indToggle,              () => { state.showInd = true; }],
-                  XTAL:  [xtalToggle,             () => { state.showXtal = true; }],
-                  TRN:   [trnToggle,              () => { state.showTrn  = true; }],
-                  JP:    [jpToggle,               () => { state.showJp = true; }],
-                  RELAY: [relayToggle,            () => { state.showRelay = true; }],
-                };
-                const _entry = _layerMap[_comp.comp_type];
-                if (_entry) {
-                  const [_toggle, _setter] = _entry;
-                  _toggle.classList.add('is-active');
-                  _setter();
-                  markDrillDirty();
-                }
-              }
-            }
-            navigateToComponent(urlRef);
-          }
+          applyHashToState();
         })
         .catch((error) => {
           empty.style.display = "grid";
