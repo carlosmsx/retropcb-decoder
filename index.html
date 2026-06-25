@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PCB Reverser</title>
+    <title>RetroPCB Decoder</title>
     
     
     <link rel="stylesheet" href="src/tools.css">
@@ -68,7 +68,7 @@
   </head>
   <body>
     <main class="hero">
-      <h1 class="hero-title" id="hero-title">PCB Reverser</h1>
+      <h1 class="hero-title" id="hero-title">RetroPCB Decoder</h1>
       <p class="hero-description" id="hero-description">Herramienta de ingeniería inversa de placas PCB.</p>
 
       <div class="hero-actions">
@@ -87,7 +87,7 @@
 
     <script>
       fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(project => {
-        const name = project?.name || 'PCB Reverser';
+        const name = project?.name || 'RetroPCB Decoder';
         const desc = project?.description || '';
         document.title = name;
         document.getElementById('hero-title').textContent = name;

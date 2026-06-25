@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>BOM Editor — PCB Reverser</title>
+    <title>BOM Editor — RetroPCB Decoder</title>
     
     <link rel="stylesheet" href="src/tools.css">
     <style>
@@ -174,7 +174,7 @@
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" id="nav-brand">
-        <span id="nav-project-name">PCB Reverser</span>
+        <span id="nav-project-name">RetroPCB Decoder</span>
       </a>
       <nav>
         <a href="bom.html">BOM</a>
@@ -464,7 +464,7 @@
 
       /* ── Project name ── */
       fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(p => {
-        const name = p?.name || 'PCB Reverser';
+        const name = p?.name || 'RetroPCB Decoder';
         document.title = `BOM Editor — ${name}`;
         const el = document.getElementById('nav-project-name');
         if (el) el.textContent = name;

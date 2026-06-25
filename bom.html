@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Bill of Materials — lista completa de componentes con valores, tipos y notas.">
-    <title>BOM — PCB Reverser</title>
+    <title>BOM — RetroPCB Decoder</title>
     
     
     <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
@@ -224,7 +224,7 @@
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="Ir al inicio" id="nav-brand">
-        <span id="nav-project-name">PCB Reverser</span>
+        <span id="nav-project-name">RetroPCB Decoder</span>
       </a>
       <nav>
         <a href="viewer.html">Viewer</a>
@@ -269,7 +269,7 @@
     <div class="page-footer sticky-footer">
       <div class="hero-stripes" aria-hidden="true"></div>
       <div class="hero-model">
-        <span id="footer-project-name">PCB Reverser</span>
+        <span id="footer-project-name">RetroPCB Decoder</span>
       </div>
     </div>
 
@@ -412,7 +412,7 @@
 
         /* ── Load project metadata ── */
         fetch('project.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(project => {
-          const name = project?.name || 'PCB Reverser';
+          const name = project?.name || 'RetroPCB Decoder';
           document.title = `BOM — ${name}`;
           const navName = document.getElementById('nav-project-name');
           if (navName) navName.textContent = name;
