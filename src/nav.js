@@ -6,12 +6,12 @@
     { label: 'Viewer',             href: 'viewer.html' },
     { label: 'BOM',                href: 'bom.html' },
     { sep: 'Edición' },
-    { label: 'Trace Editor',       href: 'trace_editor.html' },
-    { label: 'BOM Editor',         href: 'bom_editor.html' },
-    { label: 'Drills',             href: 'drill_tool.html' },
-    { label: 'Recorte',            href: 'crop_tool.html' },
-    { label: 'Alineación',         href: 'align_tool.html' },
-    { label: 'Componentes',        href: 'place_components.html' },
+    { label: '1 · Recorte',        href: 'crop_tool.html' },
+    { label: '2 · Alineación',     href: 'align_tool.html' },
+    { label: '3 · Drills',         href: 'drill_tool.html' },
+    { label: '4 · BOM Editor',     href: 'bom_editor.html' },
+    { label: '5 · Componentes',    href: 'place_components.html' },
+    { label: '6 · Trace Editor',   href: 'trace_editor.html' },
   ];
 
   const toolName   = document.body.dataset.tool || '';
