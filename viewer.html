@@ -15,7 +15,7 @@
       /* ── Nav superior fijo (estilo site-header) ── */
       .viewer-nav {
         position: fixed;
-        top: 0; left: 0; right: 0;
+        top: var(--app-nav-h); left: 0; right: 0;
         height: 52px;
         z-index: 30;
         background: var(--bg);
@@ -97,7 +97,7 @@
       /* ── Landscape: panel izquierdo ── */
       @media (orientation: landscape) {
         .toolbar {
-          top: 64px; left: 12px; bottom: 12px;
+          top: calc(64px + var(--app-nav-h)); left: 12px; bottom: 12px;
           width: 128px;
           border-radius: 8px;
         }
@@ -173,7 +173,7 @@
 
       .viewer {
         position: fixed;
-        inset: 52px 0 0 0;
+        inset: calc(52px + var(--app-nav-h)) 0 0 0;
         overflow: hidden;
         background: #101715;
         cursor: grab;
