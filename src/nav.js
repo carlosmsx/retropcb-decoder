@@ -2,9 +2,11 @@
   'use strict';
 
   const TOOLS = [
+    { sep: 'Visualización' },
     { label: 'Viewer',             href: 'viewer.html' },
-    { label: 'Trace Editor',       href: 'trace_editor.html' },
     { label: 'BOM',                href: 'bom.html' },
+    { sep: 'Edición' },
+    { label: 'Trace Editor',       href: 'trace_editor.html' },
     { label: 'BOM Editor',         href: 'bom_editor.html' },
     { label: 'Drills',             href: 'drill_tool.html' },
     { label: 'Recorte',            href: 'crop_tool.html' },
@@ -39,10 +41,10 @@
         </svg>
       </button>
       <ul class="app-nav-dropdown" role="menu" hidden>
-        ${TOOLS.map(t => `
-          <li role="none">
-            <a role="menuitem" href="${t.href}"${currentPage === t.href ? ' class="current" aria-current="page"' : ''}>${t.label}</a>
-          </li>`).join('')}
+        ${TOOLS.map(t => t.sep
+          ? `<li class="app-nav-sep" role="presentation">${t.sep}</li>`
+          : `<li role="none"><a role="menuitem" href="${t.href}"${currentPage === t.href ? ' class="current" aria-current="page"' : ''}>${t.label}</a></li>`
+        ).join('')}
       </ul>
     </div>
   `;

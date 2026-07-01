@@ -150,6 +150,17 @@ body {
   transition: background .1s;
 }
 .app-nav-dropdown li a:hover { background: var(--accent-bg); color: var(--accent); }
+.app-nav-sep {
+  padding: 6px 10px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  pointer-events: none;
+}
+.app-nav-sep:not(:first-child) { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 8px; }
+
 .app-nav-dropdown li a.current {
   color: var(--accent);
   font-weight: 600;
