@@ -1,0 +1,321 @@
+{
+  "components": [
+    {
+      "ref": "IC1",
+      "comp_type": "IC",
+      "qty": 1,
+      "part": "74LS04"
+    },
+    {
+      "ref": "IC2",
+      "comp_type": "IC",
+      "qty": 1,
+      "part": "LVA510"
+    },
+    {
+      "ref": "CN",
+      "comp_type": "CON",
+      "qty": 1,
+      "part": "9 pines"
+    },
+    {
+      "ref": "X-TAL",
+      "comp_type": "XTAL",
+      "qty": 1,
+      "value": "3.582056 MHz"
+    },
+    {
+      "ref": "L1",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "L2",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "L3",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R1",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": ""
+    },
+    {
+      "ref": "R2",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": ""
+    },
+    {
+      "ref": "R3",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo violeta naranja",
+      "value": ""
+    },
+    {
+      "ref": "R4",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": ""
+    },
+    {
+      "ref": "R5",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "amarillo violeta marron",
+      "value": ""
+    },
+    {
+      "ref": "R6",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R7",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R8",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R9",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R10",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R11",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R12",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R13",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R14",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R15",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R16",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R17",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "R18",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C1",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C2",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C3",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C4",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C5",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C6",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C7",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C8",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C9",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C10",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C11",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C12",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C13",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C14",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C15",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C16",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C17",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C18",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "C19",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "J1",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "J2",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "J3",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "J4",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "J5",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "LX",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "TR1",
+      "comp_type": "TR",
+      "qty": 1,
+      "value": ""
+    },
+    {
+      "ref": "TR2",
+      "comp_type": "TR",
+      "qty": 1,
+      "value": ""
+    }
+  ]
+}

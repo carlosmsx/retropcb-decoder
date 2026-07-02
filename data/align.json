@@ -1,0 +1,12 @@
+{
+  "side_a": "pcb_a.png",
+  "side_b": "pcb_b.png",
+  "flip_h": false,
+  "flip_v": true,
+  "size_mode": "mid",
+  "output_size": {
+    "w": 2320,
+    "h": 1038
+  },
+  "alignment": null
+}

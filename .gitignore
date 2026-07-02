@@ -9,8 +9,15 @@ __pycache__/
 
 # Imágenes fuente grandes
 img/*.png
+img/*.jpg
+img/*.jpeg
 img/*.tif
 img/*.tiff
+*.jpg
+*.jpeg
+
+# Claude Code internals
+.claude/worktrees/
 
 # Temporales
 temp/

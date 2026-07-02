@@ -1,0 +1,569 @@
+{
+  "components": [
+    {
+      "ref": "IC1",
+      "comp_type": "IC",
+      "qty": 1,
+      "part": "74LS04",
+      "drills": [
+        48,
+        146,
+        50,
+        52,
+        53,
+        54,
+        55,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        145
+      ]
+    },
+    {
+      "ref": "IC2",
+      "comp_type": "IC",
+      "qty": 1,
+      "part": "LVA510",
+      "drills": [
+        84,
+        85,
+        86,
+        88,
+        89,
+        90,
+        91,
+        92,
+        68,
+        69,
+        70,
+        71,
+        72,
+        77,
+        76,
+        79
+      ]
+    },
+    {
+      "ref": "CN",
+      "comp_type": "CON",
+      "qty": 1,
+      "part": "9 pines",
+      "drills": [
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ]
+    },
+    {
+      "ref": "X-TAL",
+      "comp_type": "XTAL",
+      "qty": 1,
+      "value": "3.582056 MHz",
+      "drills": [
+        47,
+        46
+      ]
+    },
+    {
+      "ref": "L1",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        13,
+        14
+      ]
+    },
+    {
+      "ref": "L2",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        18,
+        17
+      ]
+    },
+    {
+      "ref": "L3",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        24,
+        65
+      ]
+    },
+    {
+      "ref": "R1",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": "",
+      "drills": [
+        15,
+        16
+      ]
+    },
+    {
+      "ref": "R2",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": "",
+      "drills": [
+        12,
+        11
+      ]
+    },
+    {
+      "ref": "R3",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo violeta naranja",
+      "value": "",
+      "drills": [
+        19,
+        20
+      ]
+    },
+    {
+      "ref": "R4",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "rojo rojo rojo",
+      "value": "",
+      "drills": [
+        21,
+        22
+      ]
+    },
+    {
+      "ref": "R5",
+      "comp_type": "RES",
+      "qty": 1,
+      "note": "amarillo violeta marron",
+      "value": "",
+      "drills": [
+        6,
+        5
+      ]
+    },
+    {
+      "ref": "R6",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        94,
+        37
+      ]
+    },
+    {
+      "ref": "R7",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        32,
+        31
+      ]
+    },
+    {
+      "ref": "R8",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        33,
+        29
+      ]
+    },
+    {
+      "ref": "R9",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        34,
+        30
+      ]
+    },
+    {
+      "ref": "R10",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        144,
+        136
+      ]
+    },
+    {
+      "ref": "R11",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        8,
+        7
+      ]
+    },
+    {
+      "ref": "R12",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        152,
+        25
+      ]
+    },
+    {
+      "ref": "R13",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        133,
+        129
+      ]
+    },
+    {
+      "ref": "R14",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        132,
+        153
+      ]
+    },
+    {
+      "ref": "R15",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        130,
+        120
+      ]
+    },
+    {
+      "ref": "R16",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        74,
+        75
+      ]
+    },
+    {
+      "ref": "R17",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        26,
+        27
+      ]
+    },
+    {
+      "ref": "R18",
+      "comp_type": "RES",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        123,
+        122
+      ]
+    },
+    {
+      "ref": "C1",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        23,
+        60
+      ]
+    },
+    {
+      "ref": "C2",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        59,
+        58
+      ]
+    },
+    {
+      "ref": "C3",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        51,
+        49
+      ]
+    },
+    {
+      "ref": "C4",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        4,
+        3
+      ]
+    },
+    {
+      "ref": "C5",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        57,
+        56
+      ]
+    },
+    {
+      "ref": "C6",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        66,
+        67
+      ]
+    },
+    {
+      "ref": "C7",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        143,
+        142
+      ]
+    },
+    {
+      "ref": "C8",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        10,
+        140
+      ]
+    },
+    {
+      "ref": "C9",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        96,
+        98
+      ]
+    },
+    {
+      "ref": "C10",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        141,
+        131
+      ]
+    },
+    {
+      "ref": "C11",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        9,
+        126
+      ]
+    },
+    {
+      "ref": "C12",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        148,
+        147
+      ]
+    },
+    {
+      "ref": "C13",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        99,
+        100
+      ]
+    },
+    {
+      "ref": "C14",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        73,
+        78
+      ]
+    },
+    {
+      "ref": "C15",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        83,
+        101
+      ]
+    },
+    {
+      "ref": "C16",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        81,
+        28
+      ]
+    },
+    {
+      "ref": "C17",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        117,
+        112
+      ]
+    },
+    {
+      "ref": "C18",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        115,
+        113
+      ]
+    },
+    {
+      "ref": "C19",
+      "comp_type": "CAP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        87,
+        82
+      ]
+    },
+    {
+      "ref": "J1",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        80,
+        111
+      ]
+    },
+    {
+      "ref": "J2",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        93,
+        116
+      ]
+    },
+    {
+      "ref": "J3",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        38,
+        114
+      ]
+    },
+    {
+      "ref": "J4",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        36,
+        35
+      ]
+    },
+    {
+      "ref": "J5",
+      "comp_type": "JP",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        95,
+        97
+      ]
+    },
+    {
+      "ref": "LX",
+      "comp_type": "IND",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        121,
+        124,
+        125,
+        127,
+        128,
+        119,
+        118
+      ]
+    },
+    {
+      "ref": "TR1",
+      "comp_type": "TR",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        134,
+        45,
+        135
+      ]
+    },
+    {
+      "ref": "TR2",
+      "comp_type": "TR",
+      "qty": 1,
+      "value": "",
+      "drills": [
+        139,
+        138,
+        137
+      ]
+    }
+  ]
+}
